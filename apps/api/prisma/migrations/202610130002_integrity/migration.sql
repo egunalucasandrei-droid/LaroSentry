@@ -1,0 +1,21 @@
+CREATE EXTENSION IF NOT EXISTS btree_gist;
+ALTER TABLE "Allocation" ADD CONSTRAINT "allocation_positive_interval" CHECK ("endsAt" > "startsAt");
+ALTER TABLE "Allocation" ADD CONSTRAINT "allocation_kind" CHECK (kind IN ('BOOKING','CLOSURE'));
+ALTER TABLE "Allocation" ADD CONSTRAINT "no_overlapping_court_allocations"
+  EXCLUDE USING gist ("courtId" WITH =, tstzrange("startsAt", "endsAt", '[)') WITH &&) WHERE (active);
+ALTER TABLE "Booking" ADD CONSTRAINT "booking_positive_interval" CHECK ("endsAt" > "startsAt");
+ALTER TABLE "Booking" ADD CONSTRAINT "booking_money_guests" CHECK ("totalCentavos" >= 0 AND "hourlyRateSnapshot" >= 0 AND "expectedGuests" > 0);
+ALTER TABLE "Booking" ADD CONSTRAINT "booking_state" CHECK (status IN ('PENDING','CONFIRMED','REJECTED','EXPIRED','CANCELLED','COMPLETED','NO_SHOW'));
+ALTER TABLE "Booking" ADD CONSTRAINT "booking_mode" CHECK (mode IN ('PUBLIC','PRIVATE','BOOKING_ONLY'));
+ALTER TABLE "Court" ADD CONSTRAINT "court_values" CHECK ("hourlyRate" >= 0 AND capacity > 0);
+ALTER TABLE "Facility" ADD CONSTRAINT "facility_hours" CHECK ("openHour" >= 0 AND "closeHour" <= 24 AND "openHour" < "closeHour");
+ALTER TABLE "User" ADD CONSTRAINT "user_role" CHECK (role IN ('PLAYER','FACILITY_OWNER','FACILITY_STAFF','ADMIN'));
+ALTER TABLE "Membership" ADD CONSTRAINT "membership_role" CHECK (role IN ('OWNER','STAFF'));
+ALTER TABLE "PaymentRecord" ADD CONSTRAINT "payment_positive" CHECK ("amountCentavos" > 0);
+REVOKE ALL ON SCHEMA public FROM PUBLIC;
+GRANT USAGE ON SCHEMA public TO larosentry_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO larosentry_app;
+REVOKE ALL ON "_prisma_migrations" FROM larosentry_app;
+REVOKE UPDATE, DELETE, TRUNCATE ON "AuditEvent" FROM larosentry_app;
+REVOKE UPDATE, DELETE, TRUNCATE ON "PaymentRecord" FROM larosentry_app;
+REVOKE UPDATE, DELETE, TRUNCATE ON "BookingHistory" FROM larosentry_app;

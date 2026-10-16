@@ -1,0 +1,13 @@
+packages:
+  - apps/*
+  - packages/*
+onlyBuiltDependencies:
+  - '@nestjs/core'
+  - '@prisma/engines'
+  - argon2
+  - esbuild
+  - prisma
+overrides:
+  ip-address: 10.7.1
+  mysql2: 3.23.1
+  deepmerge-ts: 8.0.2

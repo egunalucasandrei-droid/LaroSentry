@@ -1,0 +1,39 @@
+{
+  "name": "@larosentry/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@larosentry/contracts": "workspace:*",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-router-dom": "7.18.4",
+    "@tanstack/react-query": "5.90.21",
+    "react-hook-form": "7.71.2",
+    "@hookform/resolvers": "5.2.2",
+    "zod": "4.3.6",
+    "lucide-react": "0.577.0",
+    "motion": "12.35.2",
+    "leaflet": "1.9.4",
+    "react-leaflet": "5.0.0",
+    "qrcode": "1.5.4"
+  },
+  "devDependencies": {
+    "vite": "8.3.4",
+    "@vitejs/plugin-react": "6.1.2",
+    "tailwindcss": "4.3.3",
+    "@tailwindcss/vite": "4.3.3",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@types/leaflet": "1.9.21",
+    "@types/qrcode": "1.5.6",
+    "@testing-library/react": "16.3.2",
+    "@testing-library/jest-dom": "6.9.1",
+    "jsdom": "28.1.0"
+  }
+}

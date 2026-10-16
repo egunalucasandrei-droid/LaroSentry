@@ -1,0 +1,436 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+}
+model User {
+  id String @id @default(uuid()) @db.Uuid
+  email String @unique
+  passwordHash String
+  nickname String
+  role String @default("PLAYER")
+  verifiedAt DateTime? @db.Timestamptz(3)
+  phoneEncrypted String?
+  phoneHash String? @unique
+  phoneVerifiedAt DateTime? @db.Timestamptz(3)
+  contactRequired Boolean @default(false)
+  purpose String?
+  onboardingCompletedAt DateTime? @db.Timestamptz(3)
+  sportsPreferences String[] @default([])
+  areaPreferences String[] @default([])
+  timePreferences String[] @default([])
+  goalPreferences String[] @default([])
+  courtPreference String @default("No preference")
+  budgetMin Int?
+  budgetMax Int?
+  recommendationsEnabled Boolean @default(true)
+  suspendedAt DateTime? @db.Timestamptz(3)
+  adultDeclaredAt DateTime @default(now()) @db.Timestamptz(3)
+  termsVersion String @default("2026-10-pilot")
+  privacyVersion String?
+  policyAcceptedAt DateTime? @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  mfaSecret String?
+  mfaEnabled Boolean @default(false)
+  lastTotpStep BigInt @default(-1)
+  publicProfile Boolean @default(false)
+  emailNotifications Boolean @default(true)
+  deletionRequestedAt DateTime? @db.Timestamptz(3)
+  sessions Session[]
+  tokens AccountToken[]
+  recoveryCodes RecoveryCode[]
+  memberships Membership[]
+  bookings Booking[]
+  saved SavedFacility[]
+  notifications Notification[]
+}
+model Session {
+  id String @id @default(uuid()) @db.Uuid
+  tokenHash String @unique
+  csrfHash String
+  userId String @db.Uuid
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  lastSeenAt DateTime @default(now()) @db.Timestamptz(3)
+  expiresAt DateTime @db.Timestamptz(3)
+  mfaVerified Boolean @default(false)
+  @@index([userId])
+}
+model AccountToken {
+  id String @id @default(uuid()) @db.Uuid
+  hash String @unique
+  subjectHash String?
+  kind String
+  userId String @db.Uuid
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime @db.Timestamptz(3)
+  usedAt DateTime? @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  @@index([userId, kind])
+}
+model RecoveryCode {
+  id String @id @default(uuid()) @db.Uuid
+  hash String @unique
+  userId String @db.Uuid
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+model Facility {
+  id String @id @default(uuid()) @db.Uuid
+  slug String @unique
+  name String
+  area String
+  address String
+  description String
+  latitude Float
+  longitude Float
+  amenities String[]
+  demo Boolean @default(false)
+  status String @default("PENDING")
+  openHour Int @default(6)
+  closeHour Int @default(22)
+  cancellationPolicy String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  courts Court[]
+  memberships Membership[]
+  saved SavedFacility[]
+  application FacilityApplication?
+  @@index([status, area])
+}
+model Court {
+  id String @id @default(uuid()) @db.Uuid
+  facilityId String @db.Uuid
+  facility Facility @relation(fields: [facilityId], references: [id])
+  name String
+  sport String
+  hourlyRate Int
+  capacity Int
+  active Boolean @default(true)
+  surface String @default("Hard")
+  openMinute Int?
+  closeMinute Int?
+  minDuration Int @default(30)
+  defaultDuration Int @default(60)
+  maxDuration Int?
+  startInterval Int @default(30)
+  exceptions ScheduleException[]
+  bookings Booking[]
+  allocations Allocation[]
+  @@index([facilityId])
+}
+model Membership {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  user User @relation(fields: [userId], references: [id])
+  facilityId String @db.Uuid
+  facility Facility @relation(fields: [facilityId], references: [id])
+  role String
+  permissions String[]
+  @@unique([userId, facilityId])
+}
+model Booking {
+  id String @id @default(uuid()) @db.Uuid
+  reference String @unique
+  userId String @db.Uuid
+  user User @relation(fields: [userId], references: [id])
+  courtId String @db.Uuid
+  court Court @relation(fields: [courtId], references: [id])
+  startsAt DateTime @db.Timestamptz(3)
+  endsAt DateTime @db.Timestamptz(3)
+  status String @default("PENDING")
+  mode String
+  expectedGuests Int
+  totalCentavos Int
+  hourlyRateSnapshot Int
+  policySnapshot String
+  expiresAt DateTime @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @default(now()) @updatedAt @db.Timestamptz(3)
+  source String @default("LAROSENTRY")
+  demoArchivedAt DateTime? @db.Timestamptz(3)
+  history BookingHistory[]
+  allocation Allocation?
+  paymentRecords PaymentRecord[]
+  checkInTokens CheckInToken[]
+  checkIn CheckIn?
+  rescheduleRequests RescheduleRequest[]
+  published Boolean @default(false)
+  offlineGuests Int @default(0)
+  rules String @default("")
+  participants Participation[]
+  invitations GameInvitation[]
+  reviews Review[]
+  @@index([userId, startsAt])
+  @@index([courtId, status, startsAt])
+}
+model ScheduleException {
+  id String @id @default(uuid()) @db.Uuid
+  courtId String @db.Uuid
+  court Court @relation(fields: [courtId], references: [id])
+  date String
+  openMinute Int
+  closeMinute Int
+  closed Boolean @default(false)
+  reason String
+  @@unique([courtId, date])
+}
+model RescheduleRequest {
+  id String @id @default(uuid()) @db.Uuid
+  bookingId String @db.Uuid
+  booking Booking @relation(fields: [bookingId], references: [id])
+  startsAt DateTime @db.Timestamptz(3)
+  endsAt DateTime @db.Timestamptz(3)
+  state String @default("PENDING")
+  requestedBy String @db.Uuid
+  decidedBy String? @db.Uuid
+  reason String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  decidedAt DateTime? @db.Timestamptz(3)
+  @@index([bookingId, state])
+}
+model BookingHistory {
+  id String @id @default(uuid()) @db.Uuid
+  bookingId String @db.Uuid
+  booking Booking @relation(fields: [bookingId], references: [id])
+  status String
+  actorId String @db.Uuid
+  reason String?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+}
+model Allocation {
+  id String @id @default(uuid()) @db.Uuid
+  courtId String @db.Uuid
+  court Court @relation(fields: [courtId], references: [id])
+  bookingId String? @unique @db.Uuid
+  booking Booking? @relation(fields: [bookingId], references: [id])
+  startsAt DateTime @db.Timestamptz(3)
+  endsAt DateTime @db.Timestamptz(3)
+  active Boolean @default(true)
+  kind String
+  reason String?
+  @@index([courtId, startsAt])
+}
+model IdempotencyRecord {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  key String
+  fingerprint String
+  resourceId String @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  @@unique([userId, key])
+}
+model PaymentRecord {
+  id String @id @default(uuid()) @db.Uuid
+  bookingId String @db.Uuid
+  booking Booking @relation(fields: [bookingId], references: [id])
+  amountCentavos Int
+  method String
+  reference String?
+  state String
+  actorId String @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  @@unique([bookingId, reference])
+}
+model CheckInToken {
+  id String @id @default(uuid()) @db.Uuid
+  bookingId String @db.Uuid
+  booking Booking @relation(fields: [bookingId], references: [id])
+  hash String @unique
+  revoked Boolean @default(false)
+  expiresAt DateTime @db.Timestamptz(3)
+}
+model CheckIn {
+  id String @id @default(uuid()) @db.Uuid
+  bookingId String @unique @db.Uuid
+  booking Booking @relation(fields: [bookingId], references: [id])
+  actorId String @db.Uuid
+  method String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+}
+model SavedFacility {
+  userId String @db.Uuid
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  facilityId String @db.Uuid
+  facility Facility @relation(fields: [facilityId], references: [id])
+  @@id([userId, facilityId])
+}
+model Notification {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title String
+  href String
+  readAt DateTime? @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  @@index([userId, createdAt])
+}
+model Outbox {
+  id String @id @default(uuid()) @db.Uuid
+  dedupeKey String @unique
+  recipient String
+  subject String
+  encryptedBody String
+  attempts Int @default(0)
+  nextAttemptAt DateTime @default(now()) @db.Timestamptz(3)
+  deliveredAt DateTime? @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+}
+model AuditEvent {
+  id String @id @default(uuid()) @db.Uuid
+  actorId String? @db.Uuid
+  action String
+  outcome String
+  resourceId String?
+  correlationId String
+  reason String?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  @@index([actorId, action, createdAt])
+}
+model SecurityAlert {
+  id String @id @default(uuid()) @db.Uuid
+  dedupeKey String @unique
+  rule String
+  severity String
+  state String @default("OPEN")
+  actorId String? @db.Uuid
+  note String?
+  resolvedBy String? @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  eventIds String[] @db.Uuid
+  acknowledgedBy String? @db.Uuid
+  acknowledgedAt DateTime? @db.Timestamptz(3)
+  resolvedAt DateTime? @db.Timestamptz(3)
+}
+model Participation {
+  id String @id @default(uuid()) @db.Uuid
+  bookingId String @db.Uuid
+  booking Booking @relation(fields: [bookingId], references: [id])
+  userId String @db.Uuid
+  state String @default("REQUESTED")
+  source String @default("JOIN")
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  @@unique([bookingId, userId])
+  @@index([userId, state])
+}
+model GameInvitation {
+  id String @id @default(uuid()) @db.Uuid
+  bookingId String @db.Uuid
+  booking Booking @relation(fields: [bookingId], references: [id])
+  recipientId String @db.Uuid
+  tokenHash String @unique
+  state String @default("PENDING")
+  expiresAt DateTime @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  @@index([recipientId, state])
+}
+model UserBlock {
+  blockerId String @db.Uuid
+  blockedId String @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  @@id([blockerId, blockedId])
+}
+model Review {
+  id String @id @default(uuid()) @db.Uuid
+  bookingId String @db.Uuid
+  booking Booking @relation(fields: [bookingId], references: [id])
+  userId String @db.Uuid
+  rating Int
+  text String
+  hidden Boolean @default(false)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  @@unique([bookingId, userId])
+}
+model UserReport {
+  id String @id @default(uuid()) @db.Uuid
+  reporterId String @db.Uuid
+  targetType String
+  targetId String? @db.Uuid
+  category String
+  details String
+  state String @default("OPEN")
+  resolution String?
+  resolvedBy String? @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  resolvedAt DateTime? @db.Timestamptz(3)
+}
+
+model FacilityApplication {
+  id String @id @default(uuid()) @db.Uuid
+  facilityId String @unique @db.Uuid
+  facility Facility @relation(fields: [facilityId], references: [id])
+  applicantId String @db.Uuid
+  state String @default("PENDING")
+  applicantMessage String @default("")
+  draftId String? @unique @db.Uuid
+  reviewerId String? @db.Uuid
+  identityState String @default("NOT_SUBMITTED")
+  facilityState String @default("NOT_REVIEWED")
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  @@index([state, createdAt])
+}
+
+model AdminDecision {
+  id String @id @default(uuid()) @db.Uuid
+  actorId String @db.Uuid
+  targetType String
+  targetId String @db.Uuid
+  action String
+  reason String
+  previousState String?
+  newState String?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  @@index([targetType, targetId, createdAt])
+}
+model VerificationChallenge {
+  id String @id @db.Uuid
+  userId String @db.Uuid
+  phoneHash String
+  ipHash String
+  codeHash String
+  localCipher String?
+  attempts Int @default(0)
+  deliveryState String @default("PENDING")
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  expiresAt DateTime @db.Timestamptz(3)
+  usedAt DateTime? @db.Timestamptz(3)
+  @@index([userId, createdAt])
+  @@index([phoneHash, createdAt])
+  @@index([ipHash, createdAt])
+}
+model FacilityDraft {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  data Json @default("{}")
+  relationship String @default("OWNER")
+  idType String?
+  stage String @default("DRAFT")
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @default(now()) @updatedAt @db.Timestamptz(3)
+  @@index([userId, updatedAt])
+}
+model VerificationDocument {
+  id String @id @default(uuid()) @db.Uuid
+  draftId String @db.Uuid
+  kind String
+  encryptedContent String?
+  bytes Int
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  expiresAt DateTime @db.Timestamptz(3)
+  deletedAt DateTime? @db.Timestamptz(3)
+  @@index([draftId, kind])
+}
+model StaffInvitation {
+  id String @id @default(uuid()) @db.Uuid
+  facilityId String @db.Uuid
+  invitedBy String @db.Uuid
+  email String
+  tokenHash String @unique
+  permissions String[]
+  state String @default("PENDING")
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  expiresAt DateTime @db.Timestamptz(3)
+  acceptedBy String? @db.Uuid
+  @@index([facilityId, state])
+}

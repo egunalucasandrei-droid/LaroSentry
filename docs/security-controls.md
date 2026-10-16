@@ -1,0 +1,57 @@
+# Security controls and limits
+
+Registration/verification (2026-10-16): encrypted normalized PH phone plus keyed uniqueness hash; password confirmation and separate privacy acceptance; restricted unverified sessions; channel-bound hashed email tokens, single use, expiry and resend budget; challenge-specific HMAC SMS codes, five attempts, cooldown/account/phone/IP sending limits and explicit provider-unavailable behavior. Local SMS capture is encrypted and account-bound, never production phone proof. New facility evidence requires both contacts and image sanitization/private AES-GCM storage, quotas, assigned-reviewer MFA, scoped no-store file access/audit and automatic active-store expiry. Invitations are email-bound, expiring and single-use; approval/acceptance preserves facility scope and revokes role-change sessions. [Implementation and deployment boundaries](onboarding-verification.md).
+
+Role workspaces (2026-10-16): backend membership discovery, separate OWNER/STAFF scopes, per-operation permissions, forbidden cross-facility filters, minimized projections and pagination. ADMIN/MFA oversight audits booking/payment reads. Publication requires approval, reason/confirmation and transactional admin revalidation. Staff changes exclude OWNER/ADMIN targets, require exact verified email, audit/notify and revoke target sessions. Approval promotes PLAYER/STAFF applicants and revokes sessions while preserving other memberships. Self-payment verification is denied and transitions audited; booking-only staff payment responses are redacted. [Details and limitations](role-workspaces.md).
+
+## NOLTA scheduler extension (2026-10-16)
+
+Server-side role + OWNER membership checks protect the new management namespace; merely holding ADMIN does not grant other facilities' records. Schedule settings use bounded Zod schemas and database CHECK constraints; all query values remain parameterized. Shared scheduling validation covers court activation, configured durations/start intervals, PHT hours, date overrides, past time and the 90-day horizon. Court setting writes lock the court; booking transactions take a compatible read lock before validating settings. PostgreSQL active-allocation exclusion remains authoritative under concurrency. Successful court/settings/reservation/profile/reset changes are audited without full bodies or customer emails.
+
+New player submissions require a reviewed price/policy, explicit confirmation and idempotency key. Manual bookings require current resource permission even on retries. Host rescheduling validates destination membership and same facility, revokes old QR codes, and preserves the original allocation on failure. Date exceptions reject changes that would displace a confirmed booking. Deactivation does not erase history or silently cancel reservations.
+
+Demo reset is intentionally archival: local-demo allowlist, administrator verification, explicit OWNER memberships, fictional facility flag, NOLTA source, preview fingerprint, confirmation and reason. Booking allocations/tokens are released; immutable histories and payment records are never deleted. The isolated reset browser test uses a newly created demo database, not the user's selected demonstration database. No security score or automated punishment was added.
+
+Local demo preview: `/auth/demo-access` requires a current authenticated session, matching password, origin/CSRF checks, exact named privileged demo email/role, explicit launcher flag and matching loopback demo database marker. It rotates the session and audits `LOCAL_DEMO_ACCESS`. An in-memory authorization expires after 30 minutes; logout, revocation, suspension and restart invalidate access. Neither stored `mfaVerified` nor `mfaEnabled` is changed. The API's effective UI gate includes this exception, so it must not be presented as proof of MFA. It is rejected for ordinary accounts, isolated test databases and production. Facility membership and ADMIN checks remain mandatory.
+
+## Implemented
+
+- Argon2id with 64 MiB memory, 3 iterations and one lane; minimum 12-character passwords, maximum 128.
+- Random 256-bit opaque sessions; only SHA-256 hashes stored. HttpOnly, SameSite=Lax cookie; 12-hour absolute lifetime and 30-minute idle timeout. Login/MFA rotate sessions. Password recovery/change revoke all sessions; suspension makes existing sessions unusable.
+- Same-origin JSON mutations and session-bound random CSRF token. API binds to loopback; CORS is not enabled. Cookie Secure is reserved for HTTPS; production startup rejects insecure origins and deliberately refuses this unfinished pilot.
+- Privileged owner/staff/admin actions require an enrolled MFA secret plus a verified session. TOTP secrets use AES-256-GCM with a separate environment key. Current-step replay is rejected using an atomic per-user counter. Recovery codes are random, hashed, one-use, and displayed once.
+- Zod server validation, Prisma parameterization, React output escaping, Helmet headers, bounded bodies and bounded result sets.
+- Global 180 requests/minute/IP (1000 in isolated test mode), account mutations 20/minute/IP (200 in isolated test mode). No permanent automatic ban. Rate limits are in-memory and reset at restart.
+- Object/facility authorization in controllers and list queries. Immutable audit/payment/history grants on the runtime database role. Logs contain event codes and correlation IDs, not raw request bodies or SQL errors.
+- Verification/reset secrets arrive as URL fragments; the website consumes them in memory and removes the fragment. Outbox bodies are encrypted at rest and cleared after delivery. One-use tokens have expirations and are consumed transactionally.
+- PostgreSQL allocation exclusion constraint; transactional idempotency, state transitions and QR check-in. QR tokens contain no names/booking IDs, are stored hashed, and reissue revokes prior tokens.
+
+## Boundaries and unfinished controls
+
+No claim of legal compliance, penetration-test certification, production readiness or freedom from defects is made. Endpoint validation tests exercise the application locally; no third-party security tests are authorized.
+
+Database administrators and migration owners can still alter protected records. `.env`, portable databases, mail, backups and fixture credentials are local user-owned files. Windows file mode bits alone are not NTFS ACL isolation; a production operator must set explicit service identities/ACLs. The SMTP demo uses loopback plaintext only; authenticated TLS SMTP is not configured.
+
+No file-upload/download API exists yet: content validation, sanitized derivatives, private storage, malware scanning/quarantine and actual file-access testing are outstanding. MFA reset support workflows, per-account login throttles, formal retention/deletion processing and wider security notification coverage remain outstanding. A deletion request records an intention; it does not erase records automatically.
+
+Public participation requires explicit publication and authenticated adult access. Private invitations check the intended account, expiry, state, blocks and available capacity. Invitation hashes are never returned in lists, contact details and full rosters are not exposed in game discovery, and active participation prevents a mode change. New participation is rejected for suspended organizers/players or unpublished facilities. Pair locks serialize blocking against new interactions; booking locks serialize capacity changes.
+
+Staff invites, arbitrary role changes, payment instruction edits and refunds have no public API. Reviews remain reserved schema; reporting and admin review now work. Do not mistake an absent endpoint for a finished workflow.
+
+## Administrator safeguards
+
+The complete admin API namespace requires an active account with ADMIN and verified MFA, including attempts to reach export/file routes. The website rejects non-admin roles before displaying admin navigation. The dedicated MFA page preserves first-enrollment recovery codes until the user chooses to open the workspace.
+
+Admin mutations require `confirmed: true` and a bounded reason. They take a common transaction lock, re-read the actor/session, check resource existence and allowed state, update the record and append immutable AdminDecision/AuditEvent records together. Restrictions revoke sessions; restoration permits a fresh login. Self-restriction and removing the last usable admin are rejected. Concurrent cross-restriction is tested. Denied admin mutations receive a minimal DENIED audit event with correlation and HTTP status, never the request body. Reasons intentionally recorded by reviewers must omit credentials and unnecessary personal information.
+
+Admin user projections contain account ID, nickname, email for identification, role, created/verified/restricted timestamps and MFA enrollment boolean only. Password hashes, OTP secrets, sessions, recovery codes and tokens are excluded. Lists are paginated at 20; details show the latest 50 decisions. Audit search supports action/outcome/resource, actor/event UUID and PHT dates. Exports and file downloads are disabled.
+
+Facility applications remain unpublished until an independent admin approves them. Approval and scoped owner permission changes are audited. Applicants can read the decision and answer clarification. Reports accept bounded text, use authorized target checks, rate-limit each account to ten daily submissions, and expose responses only to the reporter and authorized admins. React renders submitted text as text. Applications are limited to three per account per day. Per-account submission limits serialize under database locks.
+
+Every 30 seconds, local rules scan the latest 5,000 relevant events within 30 minutes. Rules use fixed five-minute buckets: five failed sign-ins for a known account (MEDIUM), three denied admin requests for an account (MEDIUM), or an authentication rate-limit event (LOW, unattributed). Alert deduplication uses rule/account/bucket; up to 100 supporting event IDs are retained. Acknowledgement and resolution require notes. The worker never restricts an account. Health displays last observed scan success/failure and whether the scan cap was reached. This bounded process can miss activity outside its window or under prolonged overload; it is not comprehensive intrusion detection.
+
+`/security` explains acceptable use, privacy, prohibited abuse and fair review. It links to authenticated concern reporting and publishes no personal contact details. There is no anonymous intake or configured public security mailbox; users unable to sign in need their existing project/team channel. Production reporting and appeals need an operational contact and retention policy.
+
+## Publication preparation update ? 2026-10-14
+
+See [publication review](publication-review.md) for launch blockers and isolated demo setup. Demo seed/bootstrap commands now require recognized loopback demo/test databases; production remains gated. Migration 202610140006_policy_acceptance adds nullable privacyVersion and policyAcceptedAt fields without relabeling legacy acceptance. Registration validates and records the current shared policy bundle. New local demos create four fictional roles in a new database; no existing database is reset. Complete policy approval, retention/erasure, public support and deployment review before launch.

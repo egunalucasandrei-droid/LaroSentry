@@ -1,0 +1,403 @@
+.nolta {
+  --n-ink: #202323;
+  --n-muted: #535b53;
+  --n-paper: #f5f4ef;
+  --n-line: #dedfd7;
+  --n-aqua: #8fe1d5;
+  --n-coral: #ff918d;
+  --n-yellow: #f4d86a;
+  --n-lavender: #c4b8e7;
+  width: calc(100% - 48px);
+  max-width: 1440px;
+  margin: 28px auto;
+  padding: 30px;
+  border-radius: 24px;
+  background: var(--n-paper);
+  color: var(--n-ink);
+  font-family: Manrope, 'Segoe UI', sans-serif;
+  font-size: 16px;
+  line-height: 1.55;
+}
+.nolta *,
+.nolta-modal * {
+  min-width: 0;
+  box-sizing: border-box;
+}
+.nolta h1 {
+  font-size: clamp(28px, 3vw, 32px);
+  letter-spacing: -0.045em;
+  margin: 14px 0;
+}
+.nolta h2,
+.nolta-modal h2 {
+  font-size: 22px;
+  line-height: 1.3;
+  margin: 8px 0 14px;
+}
+.nolta h3 {
+  font-size: 19px;
+}
+.nolta p,
+.nolta-modal p {
+  overflow-wrap: anywhere;
+}
+.nolta a:not(.nolta-brand):not(.nolta-button),
+.nolta-modal a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.nolta-top,
+.nolta-calendar-head,
+.nolta-modal-head {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.nolta-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+.nolta-brand small {
+  display: block;
+  font-size: 13px;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+.nolta-tag {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 20px;
+  background: #e3e4da;
+  font-size: 12px;
+  font-weight: 700;
+}
+.nolta-nav,
+.nolta-views {
+  display: flex;
+  gap: 6px;
+  margin: 24px 0;
+  padding: 5px;
+  background: #e7e8df;
+  border-radius: 12px;
+}
+.nolta-nav a,
+.nolta-views button {
+  flex: 1;
+  text-align: center;
+  padding: 12px 6px;
+  border-radius: 8px;
+  font-size: 15px;
+  text-decoration: none !important;
+}
+.nolta-nav a.active,
+.nolta-views button[aria-pressed='true'] {
+  background: #202323;
+  color: #fff;
+}
+.nolta-switch,
+.nolta-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 16px 0;
+}
+.nolta-switch {
+  font-size: 14px;
+}
+.nolta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 22px;
+  margin: 22px 0;
+}
+.nolta-card {
+  padding: 22px;
+  border: 1px solid #dedfd7;
+  border-radius: 16px;
+  background: #faf9f5;
+  margin: 14px 0;
+}
+.nolta-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  gap: 16px;
+  margin: 18px 0;
+}
+.nolta label,
+.nolta-modal label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 15px;
+  color: #343b34;
+}
+.nolta input,
+.nolta select,
+.nolta-modal input,
+.nolta-modal select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #a3ada1;
+  border-radius: 9px;
+  background: #fff;
+  color: #202323;
+  font-size: 16px;
+  min-height: 46px;
+}
+.nolta button,
+.nolta-modal button,
+.nolta-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border: 1px solid #788878;
+  border-radius: 9px;
+  padding: 10px 14px;
+  background: #e7e8df;
+  color: #202323;
+  font-size: 15px;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: none;
+}
+.nolta button:disabled,
+.nolta-modal button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+.nolta .nolta-button,
+.nolta-modal .nolta-button {
+  background: #202323;
+  color: #fff;
+  border-color: #202323;
+  text-decoration: none;
+}
+.nolta .nolta-danger,
+.nolta-modal .nolta-danger {
+  background: #f8d8d3;
+  color: #652820;
+  border-color: #a9675f;
+}
+.nolta .nolta-check,
+.nolta-modal .nolta-check {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+.nolta-check input {
+  width: 22px !important;
+  min-height: 22px !important;
+  flex: none;
+}
+.nolta form,
+.nolta-modal form {
+  display: grid;
+  gap: 18px;
+}
+.nolta-schedule-grid {
+  display: grid;
+  grid-template-columns: minmax(300px, 0.9fr) minmax(0, 1.2fr);
+  gap: 28px;
+  align-items: start;
+}
+.nolta-weekdays,
+.nolta-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 5px;
+  text-align: center;
+}
+.nolta-weekdays {
+  font-size: 13px;
+  padding: 12px 0;
+}
+.nolta .nolta-days button {
+  padding: 5px 0;
+  min-height: 46px;
+  background: #eeeee5;
+  border-color: transparent;
+  font-size: 15px;
+}
+.nolta .nolta-days button[aria-pressed='true'] {
+  background: #202323;
+  color: white;
+}
+.nolta .nolta-day {
+  grid-template-columns: 1fr;
+}
+.nolta-slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr));
+  gap: 12px;
+}
+.nolta .nolta-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  padding: 16px;
+  background: #a8e39c;
+  border-color: #6d9464;
+  gap: 6px;
+}
+.nolta-slot strong {
+  font-size: 15px;
+  font-weight: 600;
+}
+.nolta-slot span {
+  font-size: 13px;
+}
+.nolta .nolta-slot:disabled {
+  opacity: 1;
+  background: #e8e9e1;
+  color: #424a40;
+}
+.nolta .nolta-booked:disabled {
+  background: #ffcfcc;
+}
+.nolta .nolta-closed:disabled {
+  background: #f4d86a;
+}
+.nolta .nolta-slot[aria-pressed='true'] {
+  outline: 3px solid #202323;
+  outline-offset: 2px;
+}
+.nolta-help {
+  font-size: 14px;
+  color: #535b53;
+}
+.nolta-summary,
+.nolta-notice {
+  padding: 20px;
+  border-radius: 14px;
+  background: #d5ecd0;
+  border: 1px solid #97ac92;
+  margin: 18px 0;
+}
+.nolta-details {
+  border: 1px solid #b4bbae;
+  border-radius: 12px;
+  padding: 16px;
+  margin: 20px 0;
+}
+.nolta-details summary {
+  cursor: pointer;
+  font-size: 17px;
+  font-weight: 600;
+  min-height: 44px;
+}
+.nolta-reservation {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+.nolta-hero {
+  padding: 30px;
+  border-radius: 20px;
+  background: #202323;
+  color: #f5f4ef;
+}
+.nolta-hero h1 {
+  color: inherit;
+}
+.nolta-hero .nolta-button {
+  background: #8fe1d5;
+  color: #202323;
+}
+.nolta-modal {
+  width: min(1000px, calc(100% - 32px));
+  max-height: 90vh;
+  overflow: auto;
+  border: 1px solid #b4bbae;
+  border-radius: 20px;
+  padding: 26px;
+  background: #f5f4ef;
+  color: #202323;
+  font:
+    16px/1.55 'Segoe UI',
+    sans-serif;
+}
+.nolta-modal::backdrop {
+  background: #20232399;
+}
+.nolta-modal .nolta-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  gap: 16px;
+}
+.nolta :focus-visible,
+.nolta-modal :focus-visible {
+  outline: 3px solid #172b70;
+  outline-offset: 3px;
+}
+@media (max-width: 1023px) {
+  .nolta-schedule-grid {
+    grid-template-columns: 1fr;
+  }
+  .nolta {
+    padding: 24px;
+  }
+  .nolta-reservation {
+    flex-direction: column;
+  }
+}
+@media (max-width: 767px) {
+  .nolta {
+    width: 100%;
+    margin: 0;
+    padding: 18px 12px;
+    border-radius: 0;
+  }
+  .nolta-card {
+    padding: 16px;
+  }
+  .nolta-fields {
+    grid-template-columns: 1fr;
+  }
+  .nolta-top {
+    align-items: flex-start;
+  }
+  .nolta-brand {
+    font-size: 18px;
+  }
+  .nolta-nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+  .nolta-nav a {
+    font-size: 14px;
+  }
+  .nolta-modal {
+    padding: 18px;
+    width: calc(100% - 16px);
+  }
+  .nolta-calendar-head {
+    gap: 6px;
+  }
+  .nolta-calendar-head button {
+    padding: 8px 10px;
+  }
+  .nolta-slots {
+    grid-template-columns: 1fr;
+  }
+  .nolta-summary {
+    position: relative;
+  }
+  .nolta-hero {
+    padding: 22px;
+  }
+  .nolta-tag {
+    font-size: 12px;
+  }
+}
