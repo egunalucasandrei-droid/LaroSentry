@@ -2,7 +2,7 @@
 
 ## Client pilot publication request — 2026-10-17
 
-The project owner has requested GitHub publication and live client testing. No remote upload or live deployment has occurred. At inspection this repository had no commits or remote, no authenticated hosting CLI was available, and GitHub was not connected. A GitHub connection and an exact repository/hosting destination are still required; do not infer a GitHub username from the local Git author email.
+The project owner has requested GitHub publication and live client testing. Source commit `07cee540094580eae6327376e0a381e3ce5c0baf` was pushed successfully to [egunalucasandrei-droid/LaroSentry](https://github.com/egunalucasandrei-droid/LaroSentry), branch `main`, on 2026-10-17 using the repository supplied by the owner and the existing Git authentication. The remote commit was verified with `git ls-remote`. No live deployment has occurred. No hosting destination or authenticated hosting CLI is configured; a hosting account/project is still required. The available Sites publisher accepts static assets/Worker entrypoints and cannot directly run this existing NestJS/Prisma/PostgreSQL application without an architectural migration, which is outside the requested scope.
 
 The existing source passed local verification documented in [progress](progress.md). A limited pre-publication scan of the 129 existing source files found no copies of current local environment credentials or common private-key/token signatures. `.env`, `.env.migrations`, `.local`, `.tools`, generated clients, build output and browser artifacts are ignored. This check is not an exhaustive secret audit. Keep the repository private for the initial handoff and never upload the local database, passwords or real verification documents.
 

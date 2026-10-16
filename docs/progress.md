@@ -1,5 +1,9 @@
 # Implementation progress
 
+## GitHub source published — 2026-10-17
+
+Used the exact repository supplied in the owner's screenshot: `https://github.com/egunalucasandrei-droid/LaroSentry.git`. Configured `origin`, renamed the initial branch to `main`, pushed source commit `07cee540094580eae6327376e0a381e3ce5c0baf` using existing Git authentication and verified the remote hash. Local secrets/data remained ignored. No application code changed. No live deployment or public application URL is claimed: a hosting destination/account and production service configuration are still missing. Requested the hosting destination and preserved the production gate. See [deployment status](deployment.md).
+
 ## GitHub and client-pilot preparation — 2026-10-17
 
 The owner requested a GitHub upload and live client pilot. Inspected Git state, deployment configuration, production guard, service bindings, cookie settings and mail transport. No remote/initial commit, connected GitHub account or authenticated hosting CLI was available. GitHub connection was requested; no hosting destination was guessed. Updated README/deployment notes with the current publication request and specific outstanding services. Verified secret/artifact ignore rules and performed a limited scan of the 129 source files against current local environment credentials and common key/token signatures; no matches. Prepared an initial local source commit. Formatting and Git whitespace checks passed. No application code changed in this preparation step, so earlier application test evidence below remains applicable; no new application tests or live-host checks were claimed. No source has been pushed and no public URL has been deployed. Production remains gated rather than exposed through development mode.
