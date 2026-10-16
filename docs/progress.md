@@ -1,5 +1,9 @@
 # Implementation progress
 
+## Free Render pilot preparation — 2026-10-17
+
+Owner selected Render/free only and completed official CLI authorization. Created a separate Singapore PostgreSQL 17 database on the explicit `free` plan with no replicas/autoscaling; applied all eight migrations, created least-privilege runtime credentials and provisioned three fictional facilities/six courts/four random-password test accounts. Secrets remain in ignored local files and a private runtime secret file; no local accounts/data were copied. Added an explicit Render-only public-pilot boundary, Secure cookies using the existing production setting, one trusted proxy hop, same-origin frontend/API hosting with Helmet/CSP, noindex headers and truthful email/SMS unavailability. Local MFA shortcuts remain unavailable; normal privileged MFA/permissions remain enforced. Added three deployment-boundary unit tests and an operator-only fixture script. **55 integration and 9 unit tests passed; typecheck, lint and build passed.** Live web build/checks are pending; no live URL is claimed in this entry. [Configuration, free-tier limits and private test-account handoff](render-pilot.md).
+
 ## GitHub source published — 2026-10-17
 
 Used the exact repository supplied in the owner's screenshot: `https://github.com/egunalucasandrei-droid/LaroSentry.git`. Configured `origin`, renamed the initial branch to `main`, pushed source commit `07cee540094580eae6327376e0a381e3ce5c0baf` using existing Git authentication and verified the remote hash. Local secrets/data remained ignored. No application code changed. No live deployment or public application URL is claimed: a hosting destination/account and production service configuration are still missing. Requested the hosting destination and preserved the production gate. See [deployment status](deployment.md).

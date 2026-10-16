@@ -8,6 +8,7 @@ export function queueMail(tx: Tx, recipient: string, subject: string, body: stri
 }
 let running = false;
 export async function deliverMail() {
+  if (env.EMAIL_PROVIDER === 'unavailable') return;
   if (running) return;
   running = true;
   try {

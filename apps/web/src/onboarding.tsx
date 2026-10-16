@@ -25,6 +25,7 @@ type Status = {
   purpose: string | null;
   completed: boolean;
   smsMode: string;
+  emailAvailable: boolean;
   preferences: Preferences;
 };
 type Document = { id: string; kind: string; createdAt: string; expiresAt: string; deletedAt: string | null };
@@ -120,13 +121,15 @@ export default function Onboarding() {
             <p>{s.email}</p>
             <button
               className="btn secondary"
-              disabled={busy || s.emailVerified}
+              disabled={busy || s.emailVerified || s.emailAvailable === false}
               onClick={() => void action('email/resend')}
             >
               Resend verification email
             </button>
             <p className="small muted">
-              Links expire after 24 hours. Local email is captured in Mailpit; queued does not mean delivered.
+              {s.emailAvailable === false
+                ? 'Email verification is unavailable in this test pilot. No email was sent.'
+                : 'Links expire after 24 hours. Queued does not mean delivered; local testing uses Mailpit.'}
             </p>
           </div>
           <div>

@@ -116,6 +116,7 @@ export class OnboardingController {
       completed: !!u.onboardingCompletedAt,
       required: u.contactRequired,
       smsMode: smsAdapter().mode,
+      emailAvailable: env.EMAIL_PROVIDER !== 'unavailable',
       preferences: {
         sports: u.sportsPreferences,
         areas: u.areaPreferences,
@@ -131,6 +132,10 @@ export class OnboardingController {
   @Post('email/resend') async resend(@Req() req: AuthRequest) {
     const u = sessionAccount(req);
     if (u.verifiedAt) return { message: 'Email is already verified.' };
+    if (env.EMAIL_PROVIDER === 'unavailable')
+      throw new ServiceUnavailableException(
+        'Email verification is unavailable in this test pilot. No email was sent.',
+      );
     return db.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM "User" WHERE id=${u.id}::uuid FOR UPDATE`;
       const latest = await tx.accountToken.findFirst({

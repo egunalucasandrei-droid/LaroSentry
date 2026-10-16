@@ -17,6 +17,8 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { randomUUID } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { AuthController } from './auth.controller.js';
 import { FacilitiesController } from './facilities.controller.js';
 import { BookingsController, notifyBooking } from './bookings.controller.js';
@@ -26,7 +28,7 @@ import { AdminController } from './admin.controller.js';
 import { SubmissionsController } from './submissions.controller.js';
 import { collectSecurityAlerts } from './security-alerts.js';
 import { db } from './db.js';
-import { env } from './config.js';
+import { env, workspaceRoot } from './config.js';
 import { administrator, sessionMiddleware, type AuthRequest } from './http.js';
 import { deliverMail } from './outbox.js';
 import { logger } from './logger.js';
@@ -131,14 +133,38 @@ class HealthController {
 class AppModule {}
 export async function createApp() {
   const app = await NestFactory.create(AppModule, { logger: false, bodyParser: false });
+  if (env.NODE_ENV === 'production') app.getHttpAdapter().getInstance().set('trust proxy', 1);
   app.setGlobalPrefix('api');
-  app.use(helmet({ referrerPolicy: { policy: 'no-referrer' } }));
+  app.use(
+    helmet({
+      referrerPolicy: { policy: 'no-referrer' },
+      contentSecurityPolicy: {
+        directives: { imgSrc: ["'self'", 'data:', 'blob:', 'https://tile.openstreetmap.org'] },
+      },
+    }),
+  );
   app.use((req: AuthRequest, res: Response, next: () => void) => {
     req.correlationId = randomUUID();
     res.setHeader('X-Request-Id', req.correlationId);
     res.setHeader('Cache-Control', 'no-store');
     next();
   });
+  if (env.NODE_ENV === 'production') {
+    const webRoot = join(workspaceRoot, 'apps/web/dist');
+    if (!existsSync(join(webRoot, 'index.html')))
+      throw new Error('Build the web application before starting.');
+    const assets = express.static(webRoot, { index: false, dotfiles: 'deny' });
+    app.use((req: Request, res: Response, next: () => void) => {
+      if (req.path === '/api' || req.path.startsWith('/api/')) return next();
+      res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+      if (req.path === '/robots.txt') return res.type('text/plain').send('User-agent: *\nDisallow: /\n');
+      if (req.method !== 'GET' && req.method !== 'HEAD') return res.sendStatus(405);
+      assets(req, res, () => {
+        if (req.path.startsWith('/assets/') || req.path.includes('.')) return res.sendStatus(404);
+        res.sendFile(join(webRoot, 'index.html'));
+      });
+    });
+  }
   const smallJson = express.json({ limit: '32kb' }),
     imageJson = express.json({ limit: '3mb' });
   app.use((req: Request, res: Response, next: () => void) =>
@@ -232,7 +258,7 @@ export async function runMaintenance() {
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const app = await createApp();
-  await app.listen(env.PORT, '127.0.0.1');
+  await app.listen(env.PORT, env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1');
   logger.info({ event: 'api_started', port: env.PORT });
   const mailTimer = setInterval(() => void deliverMail(), 3000);
   const maintenance = setInterval(

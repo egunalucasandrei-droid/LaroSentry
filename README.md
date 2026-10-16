@@ -1,5 +1,9 @@
 # LaroSentry
 
+### Free Render testing pilot (2026-10-17)
+
+Render is the selected test host, using free services only and a separate fictional-data database. The existing stack is retained. Real email/SMS delivery remains unconfigured; privileged test accounts require actual MFA. See [pilot setup and limitations](docs/render-pilot.md) and [current deployment results](docs/progress.md). This does not approve a commercial production launch.
+
 ### Registration and verification (2026-10-17)
 
 Signup now collects email/mobile with separate policy acceptance. `/onboarding` supports email-first or SMS-first verification, optional player preferences and host intent; `/onboarding/facility` saves private evidence drafts for assigned admin review. Owner staff invitations require verified contacts before acceptance. Existing workspaces remain. The local demo enables a clearly labelled SMS simulator and Mailpit captures email; real delivery is not configured/tested. [Setup, privacy/retention, migrations, changed files and limitations](docs/onboarding-verification.md).

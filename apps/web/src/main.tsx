@@ -105,7 +105,13 @@ function Shell() {
         Skip to content
       </a>
       <div className="pilot-strip">
-        A little more play, a little closer to home. <span>Find courts. Plan games. Keep track.</span>
+        {import.meta.env.VITE_PUBLIC_PILOT === '1' ? (
+          'Test pilot only. Fictional facilities; use test information and synthetic documents. Email/SMS delivery is not configured.'
+        ) : (
+          <>
+            A little more play, a little closer to home. <span>Find courts. Plan games. Keep track.</span>
+          </>
+        )}
       </div>
       <header className="site-header">
         <div className="nav-wrap">

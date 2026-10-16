@@ -1,5 +1,9 @@
 # Deployment status
 
+## Current Render pilot preparation — 2026-10-17
+
+The owner has now chosen **Render, free resources only**, created an account and authorized the official CLI. This supersedes the Vercel direction below. One free Singapore PostgreSQL database has been created and the eight migrations applied with a separate runtime role. A narrowly scoped Render-only public test startup boundary, same-origin static frontend serving, explicit unavailable email/SMS states and operator-only synthetic fixtures have been implemented and locally checked. General commercial production remains gated. Remote web deployment and live checks are in progress; see [free pilot configuration and limitations](render-pilot.md) and [progress](progress.md) for the eventual verified address. Historical deployment statements below describe earlier states.
+
 ## Selected hosting direction — 2026-10-17
 
 The owner selected **Vercel for testing, then Hostinger for production**. This supersedes the earlier Render suggestion. No Vercel project has been connected or deployed, and no live application URL exists yet.
