@@ -1,5 +1,17 @@
 # Deployment status
 
+## Selected hosting direction — 2026-10-17
+
+The owner selected **Vercel for testing, then Hostinger for production**. This supersedes the earlier Render suggestion. No Vercel project has been connected or deployed, and no live application URL exists yet.
+
+Keep React/Vite, NestJS, Prisma and PostgreSQL. Vercel supports NestJS functions, so a framework replacement is unnecessary. The current application is not yet packaged or verified for that runtime: it starts a persistent loopback listener, uses in-process email/maintenance timers and memory-based general rate limits, and deliberately refuses production startup. A Vercel adaptation must preserve same-origin `/api` session/CSRF behavior, replace persistent timers with authenticated scheduled/queued work, verify distributed throttling and pool connections to a separately hosted PostgreSQL database. Merely importing the Vite frontend will not make login, bookings or admin workflows work online. No production guard has been removed as part of recording this decision.
+
+Next account step: sign into Vercel using GitHub and authorize `egunalucasandrei-droid/LaroSentry`. Configure a separate test PostgreSQL database, server-only secrets and real verification delivery services; do not upload `.env` or expose local Mailpit/SMS simulation. A Vercel account/project connection is still required before remote configuration or deployment can be performed here.
+
+For the later move, keep provider configuration separate from business logic and preserve the database schema and encryption key through a verified migration. A Hostinger VPS can run the existing long-lived Node service, PostgreSQL and scheduled worker; choose the eventual plan after confirming its Node/PostgreSQL support. Hostinger migration is not implemented or tested yet.
+
+Official references checked: [NestJS on Vercel](https://vercel.com/docs/frameworks/backend/nestjs), [NestJS serverless scheduling guidance](https://vercel.com/kb/guide/ship-a-nestjs-app-on-vercel), [function connection pooling](https://vercel.com/kb/guide/connection-pooling-with-functions), [Hostinger PostgreSQL hosting](https://www.hostinger.com/applications/postgresql).
+
 ## Client pilot publication request — 2026-10-17
 
 The project owner has requested GitHub publication and live client testing. Source commit `07cee540094580eae6327376e0a381e3ce5c0baf` was pushed successfully to [egunalucasandrei-droid/LaroSentry](https://github.com/egunalucasandrei-droid/LaroSentry), branch `main`, on 2026-10-17 using the repository supplied by the owner and the existing Git authentication. The remote commit was verified with `git ls-remote`. No live deployment has occurred. No hosting destination or authenticated hosting CLI is configured; a hosting account/project is still required. The available Sites publisher accepts static assets/Worker entrypoints and cannot directly run this existing NestJS/Prisma/PostgreSQL application without an architectural migration, which is outside the requested scope.
