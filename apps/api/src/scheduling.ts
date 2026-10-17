@@ -17,7 +17,7 @@ export async function rulesFor(
     defaultDuration: court.defaultDuration,
     maxDuration: court.maxDuration,
     startInterval: court.startInterval,
-    active: court.active,
+    active: court.active && !court.archivedAt && court.availabilityStatus === 'AVAILABLE',
     closed: exception?.closed ?? false,
   };
 }

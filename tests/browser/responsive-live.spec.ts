@@ -23,6 +23,14 @@ test('live responsive public pages, booking availability, API/database and produ
   expect(response!.status()).toBe(200);
   expect(response!.url()).toMatch(/^https:\/\//);
   expect(response!.headers()['content-security-policy']).toContain("script-src 'self'");
+  const theme = page.getByRole('button', { name: 'Dark mode', exact: true });
+  await expect(theme).toBeVisible();
+  if ((await theme.getAttribute('aria-pressed')) !== 'true') await theme.click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await page.reload();
+  await expect(theme).toHaveAttribute('aria-pressed', 'true');
+  await theme.click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
   const health = await (await page.request.get('/api/health')).json();
   expect(health.database).toBe('connected');
   expect(health.demoMode).not.toBe(true);
@@ -109,6 +117,11 @@ for (const role of ['PLAYER', 'FACILITY_OWNER', 'FACILITY_STAFF', 'ADMIN'])
       expect((await page.request.get('/api/report-targets?type=FACILITY&page=1')).status()).toBe(200);
       await fits(page);
       await page.goto('/scheduler/book');
+      await expect(page.locator('.nolta-top')).toContainText('USER MODE');
+      await expect(page.getByRole('navigation', { name: 'NOLTA navigation' }).getByRole('link')).toHaveCount(
+        3,
+      );
+      await expect(page.locator('.nolta').getByText('Account / Logout', { exact: true })).toHaveCount(0);
       await expect(page.locator('.nolta-slot').first()).toBeVisible();
       await fits(page);
       await page.setViewportSize({ width: 360, height: 800 });

@@ -1,5 +1,32 @@
 ﻿# Implementation progress
 
+## NOLTA court lifecycle, compact navigation and light/dark mode - 2026-10-17
+
+Inspected existing NOLTA source reference, app/API/auth/schema/tests/docs before changes. Existing scheduling, pricing, approval, payment, reschedule, maintenance, reset and account/resource controls were retained. Confirmed gaps: required/visible court surface, duplicate profile/account links, management badge wording, name uniqueness, conflicting court changes, no safe removal, and no persistent theme toggle. Referenced PDF was not available; supplied screenshot guided the compact header.
+
+Implemented:
+
+- Global moon/sun toggle for persistent white/light and dark appearance; first-use system preference, cross-tab synchronization, storage-failure fallback, accessible pressed state and themed native controls. Stores only a non-sensitive theme key.
+- Three NOLTA user tabs (Home / Book a Court / My Reservations), three management tabs (Schedule / Courts / Activity), USER MODE / ADMIN MODE from guarded active workspace. Shared account settings/security/global logout remain. Legacy NOLTA profile URL redirects to main account settings.
+- Removed surface from NOLTA UI and input validation without deleting shared values. Court forms inherit selected facility hours; status selector supports Available / Unavailable / Maintenance. Names normalize whitespace and reject case-insensitive facility-local duplicates.
+- Additive migration 202610170009 adds availabilityStatus/archivedAt and maps preexisting inactive courts to Unavailable. Row locks protect setting changes against transactional booking quotes; conflicts with future confirmed sessions return 409 with a reference for explicit resolution. Pricing/lifecycle/exclusion constraint remain unchanged.
+- Safe Remove Court archives after scope/MFA/CSRF/reason/confirmation and future-booking/allocation checks. All accounts/court IDs/history/settings/maintenance/payment data are retained. Archived courts leave NOLTA selectors; empty lists do not recreate a court. No permanent deletion or restore UI.
+- Activity facility filter, exact booking-ID search and creation timestamp; existing actions/filters/paging/local-demo archive reset remain. Open schedule selects its court. Inactive published courts expose disabled public slots without customer details.
+- Compact three-column mobile navigation, readable labels, centered safe-area/dynamic-height dialogs, internal scrolling, wrapping references and sticky close control.
+
+Verified: 59 API integrations, 14 ON/OFF demo API, 11 unit tests, and **24 browser-suite cases** (scheduler 3 / responsive 9 / admin 6 / discovery-information 6) passed; all four existing local role logins/distinct views passed. Dark homepage/login/discovery checked at 390/1440 with no serious/critical axe findings; NOLTA dark axe and theme reload/mode/archive workflows passed. Public/calendar widths 320/360/375/390/412/430/768/820/1024/1280/1440/1920; roles at 320/360/390/430/768/1440. Lint/typecheck/build passed. [Full tests, initial fixes and commands](testing.md#nolta-lifecycle-navigation-and-theme-verification---2026-10-17).
+
+Selected existing local demo migrated and restarted at http://127.0.0.1:5176, preserving credentials, MFA and existing records. Open `/scheduler/book` or `/scheduler/admin/courts`; online access still requires normal MFA. **Not deployed or pushed for deployment; Render service/configuration/secrets/data remain unchanged.** Build is prepared locally; deployment needs the requested explicit authorization and the additive migration applied to the intended database before starting the new API.
+
+Changed files:
+
+- API/database: `apps/api/prisma/schema.prisma`, `apps/api/prisma/migrations/202610170009_court_lifecycle/migration.sql`, `apps/api/src/{scheduler.controller,scheduling,bookings.controller}.ts`.
+- Web: `apps/web/src/{main,scheduler,theme}.tsx`, `apps/web/src/{styles,scheduler,theme}.css`.
+- Tests: `apps/api/test/{scheduler.test,scheduler-browser-fixtures}.ts`, `tests/browser/scheduler.spec.ts`.
+- Docs: `README.md`, `docs/{progress,testing,nolta-scheduler,nolta-integration,system-framework,api,access-control-matrix,security-controls,threat-model,deployment}.md`.
+
+Remaining limits: court/exceptions list caps unchanged, exact-date plus period filtering (no separate date-range pair), permanent court deletion/archive restoration deliberately absent, physical-device/load testing not performed, referenced PDF unavailable. Existing shared-module React hot-reload warning and pg adapter deprecation warning remain; refresh fully after development HMR when necessary. Unavailable delivery/gateway/camera/review integrations remain future work. No commercial launch or security certification is claimed.
+
 ## Client-presentation refresh - 2026-10-17
 
 Inspected application/API/schema/routes/tests/docs before changes. Preserved the stack, design, data, booking state machine, approvals, MFA, sessions and resource permissions. Added own-account player metrics/recent activity, searchable published/visible report targets with POST revalidation, actual admin totals/recent audit, permission-aware owner/staff shortcuts, homepage path cards, real court/sport metadata, improved original court SVGs, calendar request checklist, external-payment/QR guidance and public-game action states.

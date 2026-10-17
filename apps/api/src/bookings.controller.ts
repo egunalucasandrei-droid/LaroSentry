@@ -32,6 +32,8 @@ export async function lockBooking(tx: Tx, id: string) {
   await tx.$queryRaw`SELECT id FROM "Booking" WHERE id = ${id}::uuid FOR UPDATE`;
 }
 export async function quote(tx: Tx, data: BookingInput, ignoreBookingId?: string) {
+  // Serialize court-setting changes against transactional booking/confirmation quotes.
+  await tx.$queryRaw`SELECT id FROM "Court" WHERE id = ${data.courtId}::uuid FOR SHARE`;
   await tx.$queryRaw`SELECT id FROM "Court" WHERE id = ${data.courtId}::uuid FOR SHARE`;
   const court = await tx.court.findFirst({
     where: { id: data.courtId, active: true, facility: { status: 'PUBLISHED' } },

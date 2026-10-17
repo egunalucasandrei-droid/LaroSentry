@@ -23,3 +23,5 @@ This task does not add arbitrary calendar drag/reschedule, court creation/editin
 MFA now preserves a safe return path to the management hub while keeping initial recovery codes visible. No demo passwords or accounts were changed.
 
 Changed: `apps/web/src/management.tsx` (new), `main.tsx`, `workspace.tsx`, `auth.tsx`, `styles.css`; `apps/api/src/operations.controller.ts`; API and browser tests/fixtures; access-control/API/progress documentation and this note. No schema migration or dependency addition.
+
+NOLTA follow-up (2026-10-17): simplified user navigation, main-profile redirect, dynamic mode labels, safe court archival/conflict checks and persistent light/dark themes are documented in [NOLTA scheduler](nolta-scheduler.md#court-lifecycle-compact-navigation-and-themes---2026-10-17). The new migration is additive and retains the legacy shared surface column; no production deploy or database reset is part of this update.

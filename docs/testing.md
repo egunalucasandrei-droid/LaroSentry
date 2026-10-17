@@ -90,3 +90,42 @@ $env:BROWSER_BASE_URL='https://larosentry-test.onrender.com'
 $env:RENDER_RESPONSIVE_E2E='1'
 .\pnpm.cmd exec playwright test tests/browser/responsive-live.spec.ts
 ```
+
+## NOLTA lifecycle, navigation and theme verification - 2026-10-17
+
+Current-task results (historical results above are separate):
+
+| Executed check | Final result |
+| --- | --- |
+| `test` | 11 unit tests passed |
+| `test:integration` | 59 PostgreSQL tests passed (33.3s), including no-surface create, normalized duplicate rejection, status/disabled-slot parity, archive CSRF/MFA/role/scope/reason, displaced-booking rejection and retained history |
+| `test:demo-mode` | 14 passed, 7 ON / 7 OFF; existing production/bypass boundaries retained |
+| `test:scheduler:e2e` | 3 passed (18.1s), including real manual/player booking, approval-related availability, reschedule/maintenance/exceptions/cancellation, filters/reset, global profile/logout, theme persistence/mode navigation, status/archive and selected-facility default hours |
+| `test:responsive:e2e` | 9 passed (1.1m), including three presentation workflows, all four role workspaces and shared slot/dialog behavior |
+| `test:admin:e2e` | 6 passed (44.8s), including all non-admin direct denials, real MFA, reviews/restrictions/alerts/audit and staff payment/check-in |
+| Discovery/information browser files | 6 passed (27.7s) against existing local demo |
+| Existing local accounts | 4/4 login and distinct landing/workspace checks passed after the additive migration; no credential/MFA reset |
+| Dark accessibility smoke | Homepage/login/discovery each checked at 390 and 1440 with no serious/critical axe violations; NOLTA dark-mode axe passed in the scheduler suite |
+| `lint`, `typecheck`, `build` | Passed |
+
+Total browser-suite cases: **24**, plus the four existing-account logins and six dark public-page checks. Responsive widths: 320/360/375/390/412/430/768/820/1024/1280/1440/1920 for public/calendar; role matrix 320/360/390/430/768/1440. NOLTA workflow tests also check 320/360/375/390/412/430/768/1024/1280/1440/1920 and landscape. Native dialog scrolling, mobile bounds, selected slots and keyboard/menu behavior remain covered. Screenshots visually inspected for dark homepage/discovery and NOLTA schedule; private artifacts retained under `.local/nolta-evidence` and `.local/nolta-*.png`.
+
+Initial failures were resolved: a UTF-8 BOM was removed from the new SQL migration before it reached the selected local demo; the old test permitting deactivation with confirmed bookings now correctly expects 409 and unchanged reservation data; court-status/facility selects have explicit accessible names; a dark footer override now uses the themed text token. The final scheduler rerun includes selected-facility operating-hour inheritance. Existing React-root hot-reload warnings can appear while editing shared modules; full-page loads and final tests passed. The existing pg concurrent-query deprecation warning remains. No physical-device, load, external-provider or live deployment tests are claimed.
+
+Commands from PowerShell:
+
+```powershell
+.\pnpm.cmd test
+.\pnpm.cmd test:integration
+.\pnpm.cmd test:demo-mode
+.\pnpm.cmd test:scheduler:e2e
+.\pnpm.cmd test:responsive:e2e
+.\pnpm.cmd test:admin:e2e
+.\pnpm.cmd typecheck
+.\pnpm.cmd lint
+.\pnpm.cmd build
+$env:BROWSER_BASE_URL='http://127.0.0.1:5176'
+.\pnpm.cmd exec playwright test tests/browser/discovery.spec.ts tests/browser/information.spec.ts
+```
+
+No Render request, remote migration, seed, secret edit, new service or deployment was made for this task. Existing online deployment does not yet contain this update.

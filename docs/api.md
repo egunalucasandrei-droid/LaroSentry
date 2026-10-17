@@ -101,3 +101,11 @@ POST `/reports` accepts targetType=SECURITY|GENERAL|FACILITY|GAME, category (Sec
 | `GET /report-targets?type=GAME&q=&page=1` | Account required; existing public-game visibility/blocking rules; twenty choices per page within the existing sixty-game discovery window. |
 
 Existing report POST target authorization remains mandatory regardless of what the selector returned. Admin overview adds real database totals and five recent ADMIN-prefixed audit actions, while retaining the same ADMIN/MFA guards. No new export or file capability is introduced.
+
+## Court lifecycle and themes - 2026-10-17
+
+NOLTA court create/update now accept optional `availabilityStatus`: AVAILABLE, UNAVAILABLE or MAINTENANCE. Legacy `active` is still accepted; an explicit status determines the canonical active flag. Surface is no longer validated or written by these endpoints. Names normalize whitespace and reject case-insensitive facility-local duplicates. Conflicting future confirmed reservations return 409 before a settings change.
+
+`POST /scheduler/courts/:id/archive` requires the normal privileged host session and facility OWNER membership, CSRF, `{confirmed:true,reason}`. Future pending/confirmed bookings or active allocations block archival. Success marks archivedAt and disables the court while preserving dependencies/audit; no physical deletion endpoint is introduced. Public scheduler court/slot reads offer published inactive courts with disabled slots, excluding archived courts. Existing ownership checks on reservation reads/actions remain.
+
+Reservation activity additionally accepts validated `facilityId` and an exact booking UUID in `q`; existing court/name/reference/status/date/period/paging controls remain. Counts and rows are constrained to the same session-owned or owner-assigned scope. Creation timestamps were already returned and are now displayed.

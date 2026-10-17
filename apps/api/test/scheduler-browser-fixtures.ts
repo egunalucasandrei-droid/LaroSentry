@@ -52,6 +52,30 @@ await db.facility.create({
     },
   },
 });
+await db.facility.create({
+  data: {
+    name: 'Z Different Hours Club',
+    slug: 'different-hours-club',
+    area: 'Fictional',
+    address: 'Local test only',
+    description: 'Empty facility to verify inherited hours',
+    latitude: 14,
+    longitude: 121,
+    amenities: [],
+    demo: true,
+    status: 'PUBLISHED',
+    openHour: 8,
+    closeHour: 18,
+    cancellationPolicy: 'Cancel before start.',
+    memberships: {
+      create: ['ADMIN', 'FACILITY_OWNER'].map((role) => ({
+        userId: fixtures[role]!.id,
+        role: 'OWNER',
+        permissions: ['BOOKINGS'],
+      })),
+    },
+  },
+});
 writeFileSync(resolve('../../.local/scheduler-browser-fixtures.json'), JSON.stringify(fixtures), {
   mode: 0o600,
 });

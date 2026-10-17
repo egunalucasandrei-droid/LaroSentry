@@ -6,6 +6,9 @@ import { ArrowUpRight, Bell, Menu, ShieldCheck, X } from 'lucide-react';
 import type { User } from '@larosentry/contracts';
 import { api, post, ApiError } from './api';
 import './styles.css';
+import './theme.css';
+import { initializeTheme, ThemeToggle } from './theme';
+initializeTheme();
 const Home = lazy(() => import('./public').then((m) => ({ default: m.Home })));
 const Onboarding = lazy(() => import('./onboarding'));
 const StaffInvitation = lazy(() => import('./onboarding').then((m) => ({ default: m.StaffInvitation })));
@@ -137,6 +140,7 @@ function Shell() {
       <header className="site-header">
         <div className="nav-wrap">
           <Brand />
+          <ThemeToggle />
           <button
             className="icon-button mobile-menu"
             ref={menuButton}

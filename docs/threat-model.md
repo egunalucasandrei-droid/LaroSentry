@@ -50,3 +50,9 @@ The local operator holding database credentials remains trusted and can grant AD
 - Rehearsal overwrites existing bookings or runs online: dedicated fictional court, business-rule quote, transaction/advisory lock, daily idempotent marker, and explicit production/Render/public-pilot refusal. No destructive reset or remote seed.
 - Synthetic alerts mistaken for wrongdoing: fixture reasons explicitly identify an exercise; acknowledgement/resolution remains human review and no automatic punishment is added.
 - False commercial claims: original illustrations, external payment records, unavailable delivery providers and absent camera/gateway/review integrations are disclosed in the presenter guide.
+
+## Court lifecycle and themes - 2026-10-17
+
+A court setting edit could previously make a confirmed session inconsistent with hours/availability. Court updates now take a row write lock and validate future confirmed sessions; booking transaction quotes take a matching shared lock, retaining the existing exclusion constraint. Duplicate court names are checked under a facility advisory lock without deleting/renaming existing duplicates. NOLTA archival requires privileged OWNER scope, CSRF, confirmation/reason, rejects active future dependencies and retains history. Archived courts cannot obtain bookable schedule rules even if a legacy endpoint changes the active flag.
+
+Theme selection is non-sensitive browser display state only, isolated to one storage key. It cannot grant access or reset sessions. Mode badges are derived from active authorized routes and do not enforce privileges. The existing server role/MFA/membership checks remain authoritative. No production deployment or security guarantees are implied.

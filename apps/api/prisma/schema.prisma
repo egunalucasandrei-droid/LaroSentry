@@ -106,6 +106,8 @@ model Court {
   hourlyRate Int
   capacity Int
   active Boolean @default(true)
+  availabilityStatus String @default("AVAILABLE")
+  archivedAt DateTime? @db.Timestamptz(3)
   surface String @default("Hard")
   openMinute Int?
   closeMinute Int?

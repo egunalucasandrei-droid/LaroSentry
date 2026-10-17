@@ -38,13 +38,13 @@ test('court management, manual reservations, reschedule, maintenance, exceptions
   const card = page.locator('article').filter({ hasText: 'New tennis court' });
   await expect(card).toBeVisible();
   await card.getByRole('button', { name: 'Edit court / activation' }).click();
-  await modal.getByLabel('Court active').uncheck();
+  await modal.getByLabel('Court status', { exact: true }).selectOption('UNAVAILABLE');
   await modal.getByLabel('Reason', { exact: true }).fill('Test reversible deactivation');
   await modal.getByLabel('I confirm these changes.').check();
   await modal.getByRole('button', { name: 'Save court' }).click();
-  await expect(card).toContainText('Inactive');
+  await expect(card).toContainText('Unavailable');
   await card.getByRole('button', { name: 'Edit court / activation' }).click();
-  await modal.getByLabel('Court active').check();
+  await modal.getByLabel('Court status', { exact: true }).selectOption('AVAILABLE');
   await modal.getByLabel('Reason', { exact: true }).fill('Restore active court');
   await modal.getByLabel('I confirm these changes.').check();
   await modal.getByRole('button', { name: 'Save court' }).click();
@@ -126,7 +126,7 @@ test('court management, manual reservations, reschedule, maintenance, exceptions
   await expect(
     page.getByRole('button', { name: '2:00 PM – 2:45 PM Maintenance / unavailable', exact: true }),
   ).toBeDisabled();
-  for (const width of [320, 375, 430, 768, 1024, 1280, 1440, 1920]) {
+  for (const width of [320, 360, 375, 390, 412, 430, 768, 1024, 1280, 1440, 1920]) {
     await page.setViewportSize({ width, height: 900 });
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
@@ -169,9 +169,8 @@ test('user booking, private reservations, profile, cancellation and responsive s
   await page.goto('/scheduler/admin/activity');
   await expect(page.getByRole('heading', { name: 'Admin or court host access required' })).toBeVisible();
   await page.goto('/scheduler/profile');
-  await page.getByLabel('Account name').fill('NOLTA browser player');
-  await page.getByRole('button', { name: 'Save profile' }).click();
-  await expect(page.getByRole('status')).toContainText('Profile saved');
+  await expect(page).toHaveURL(/\/app\/settings\/profile$/);
+  await expect(page.getByRole('heading', { name: 'Account settings', exact: true })).toBeVisible();
   await page.goto('/scheduler/book');
   await expect(page.getByRole('heading', { name: 'Available time slots' })).toBeVisible();
   for (const width of [320, 375, 430, 768, 1024, 1280, 1440, 1920]) {
@@ -192,7 +191,64 @@ test('user booking, private reservations, profile, cancellation and responsive s
   await page.screenshot({ path: 'test-results/nolta-mobile.png', fullPage: true });
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.screenshot({ path: 'test-results/nolta-desktop.png', fullPage: true });
-  await page.goto('/scheduler/profile');
-  await page.getByRole('button', { name: 'Log out of NOLTA' }).click();
-  await expect(page).toHaveURL(/\/login/);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole('button', { name: 'Open menu', exact: true }).click();
+  await page.getByRole('button', { name: 'Log out', exact: true }).click();
+  await expect(page).toHaveURL('/');
+  expect((await (await page.request.get('/api/auth/me')).json()).user).toBeNull();
+});
+
+test('theme persists, three-tab navigation stays scoped and court archival is usable', async ({ page }) => {
+  test.setTimeout(120000);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await login(page, 'ADMIN', '/scheduler/admin/courts');
+  await expect(page.locator('.nolta-top')).toContainText('ADMIN MODE');
+  const toggle = page.getByRole('button', { name: 'Dark mode', exact: true });
+  if ((await toggle.getAttribute('aria-pressed')) !== 'true') await toggle.click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await page.reload();
+  await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: 'Add Court', exact: true }).click();
+  const modal = page.getByRole('dialog');
+  await expect(modal.getByLabel('Surface', { exact: true })).toHaveCount(0);
+  await modal.getByLabel('Facility', { exact: true }).selectOption({ label: 'Z Different Hours Club' });
+  await expect(modal.getByLabel('Opens (AM/PM)', { exact: true })).toHaveValue('8:00 AM');
+  await expect(modal.getByLabel('Closes (AM/PM)', { exact: true })).toHaveValue('6:00 PM');
+  await modal.getByLabel('Facility', { exact: true }).selectOption({ label: 'NOLTA Test Club' });
+  await modal.getByLabel('Court name', { exact: true }).fill('Archive browser court');
+  await modal.getByLabel('Court status', { exact: true }).selectOption('MAINTENANCE');
+  await modal.getByLabel('Reason', { exact: true }).fill('Create isolated maintenance court');
+  await modal.getByLabel('I confirm these changes.').check();
+  await modal.getByRole('button', { name: 'Save court', exact: true }).click();
+  await expect(modal).not.toBeVisible();
+  const card = page.locator('article').filter({ hasText: 'Archive browser court' });
+  await expect(card).toContainText('Maintenance');
+  await card.getByRole('button', { name: 'Remove court', exact: true }).click();
+  await modal.getByLabel('Reason', { exact: true }).fill('Archive unused browser fixture');
+  await modal.getByLabel('I confirm court archival and understand that history is preserved.').check();
+  await modal.getByRole('button', { name: 'Archive court', exact: true }).click();
+  await expect(modal).not.toBeVisible();
+  await expect(card).toHaveCount(0);
+  await page.getByRole('link', { name: 'Open user mode', exact: true }).click();
+  await expect(page.locator('.nolta-top')).toContainText('USER MODE');
+  const nav = page.getByRole('navigation', { name: 'NOLTA navigation' });
+  await expect(nav.getByRole('link')).toHaveCount(3);
+  await expect(nav.getByRole('link', { name: 'Profile', exact: true })).toHaveCount(0);
+  await expect(page.locator('.nolta').getByText('Account / Logout', { exact: true })).toHaveCount(0);
+  await nav.getByRole('link', { name: 'Book a Court', exact: true }).click();
+  await expect(page.locator('.nolta-slot').first()).toBeVisible();
+  for (const width of [320, 360, 375, 390, 412, 430, 768, 1024, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+  }
+  const axe = await new AxeBuilder({ page })
+    .include('.nolta')
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
+    .analyze();
+  expect(axe.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical')).toEqual([]);
+  await page.screenshot({ path: '.local/nolta-theme-dark.png', fullPage: true });
+  await toggle.click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  await page.reload();
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false');
 });

@@ -14,26 +14,31 @@ import {
 } from '@nestjs/common';
 import { z } from 'zod';
 import { randomBytes } from 'node:crypto';
-import { bookingSchema } from '@larosentry/contracts';
+import { bookingSchema, intervalError, phtDate } from '@larosentry/contracts';
 import { db, type Tx } from './db.js';
 import { account, administrator, parse, privileged, uuid, type AuthRequest } from './http.js';
 import { audit } from './audit.js';
 import { lockBooking, notifyBooking, quote } from './bookings.controller.js';
-import { courtSchedule } from './scheduling.js';
+import { courtSchedule, rulesFor } from './scheduling.js';
 import { demoAccessAllowed, demoModeFor } from './demo-access.js';
 import { hash } from './crypto.js';
 
 const confirmation = z.object({ confirmed: z.literal(true), reason: z.string().trim().min(3).max(300) });
 const courtFields = z
   .object({
-    name: z.string().trim().min(2).max(80),
-    surface: z.string().trim().min(2).max(40),
+    name: z
+      .string()
+      .trim()
+      .min(2)
+      .max(80)
+      .transform((v) => v.replace(/\s+/g, ' ')),
     sport: z
       .enum(['Tennis', 'Basketball', 'Badminton', 'Volleyball', 'Futsal', 'Pickleball'])
       .default('Tennis'),
     hourlyRate: z.number().int().min(0).max(10000000),
     capacity: z.number().int().min(1).max(40),
     active: z.boolean(),
+    availabilityStatus: z.enum(['AVAILABLE', 'UNAVAILABLE', 'MAINTENANCE']).optional(),
     openMinute: z.number().int().min(0).max(1439),
     closeMinute: z.number().int().min(1).max(1440),
     minDuration: z.number().int().min(1).max(1440),
@@ -63,6 +68,23 @@ async function host(req: AuthRequest, facilityId?: string, tx: Tx = db) {
   return user;
 }
 const owned = (id: string) => ({ memberships: { some: { userId: id, role: 'OWNER' } } });
+async function uniqueCourtName(tx: Tx, facilityId: string, name: string, except?: string) {
+  await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${facilityId}, 0))::text`;
+  const courts = await tx.court.findMany({
+    where: { facilityId, archivedAt: null },
+    select: { id: true, name: true },
+  });
+  if (
+    courts.some(
+      (c) => c.id !== except && c.name.trim().replace(/\s+/g, ' ').toLowerCase() === name.toLowerCase(),
+    )
+  )
+    throw new ConflictException('A court with this name already exists at this facility.');
+}
+function courtData(input: z.infer<typeof courtFields>) {
+  const availabilityStatus = input.availabilityStatus ?? (input.active ? 'AVAILABLE' : 'UNAVAILABLE');
+  return { ...input, availabilityStatus, active: availabilityStatus === 'AVAILABLE' };
+}
 const courtInclude = { facility: true };
 const bookingInclude = {
   court: { include: { facility: true } },
@@ -96,7 +118,9 @@ export class SchedulerController {
     if (manage === '1') await host(req);
     return db.court.findMany({
       where:
-        manage === '1' ? { facility: owned(user.id) } : { active: true, facility: { status: 'PUBLISHED' } },
+        manage === '1'
+          ? { archivedAt: null, facility: owned(user.id) }
+          : { archivedAt: null, facility: { status: 'PUBLISHED' } },
       include: courtInclude,
       orderBy: [{ facility: { name: 'asc' } }, { name: 'asc' }],
       take: 500,
@@ -128,7 +152,7 @@ export class SchedulerController {
     const court = await db.court.findUnique({ where: { id: uuid(id) }, include: courtInclude });
     if (!court) throw new NotFoundException();
     if (q.manage === '1') await host(req, court.facilityId);
-    else if (!court.active || court.facility.status !== 'PUBLISHED') throw new NotFoundException();
+    else if (court.archivedAt || court.facility.status !== 'PUBLISHED') throw new NotFoundException();
     if (q.ignoreBookingId) {
       if (q.manage !== '1') throw new ForbiddenException();
       const booking = await db.booking.findUnique({
@@ -146,7 +170,8 @@ export class SchedulerController {
       decision = parse(confirmation, body);
     const user = await host(req, facilityId);
     return db.$transaction(async (tx) => {
-      const court = await tx.court.create({ data: { ...input, facilityId } });
+      await uniqueCourtName(tx, facilityId, input.name);
+      const court = await tx.court.create({ data: { ...courtData(input), facilityId } });
       await audit(
         tx,
         user.id,
@@ -170,15 +195,63 @@ export class SchedulerController {
     return db.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM "Court" WHERE id = ${id}::uuid FOR UPDATE`;
       const court = await tx.court.findUnique({ where: { id }, include: courtInclude });
-      if (!court) throw new NotFoundException();
+      if (!court || court.archivedAt) throw new NotFoundException();
       const user = await host(req, court.facilityId, tx);
-      const updated = await tx.court.update({ where: { id }, data: input });
+      await uniqueCourtName(tx, court.facilityId, input.name, id);
+      const data = courtData(input);
+      const upcoming = await tx.booking.findMany({
+        where: { courtId: id, status: 'CONFIRMED', endsAt: { gt: new Date() } },
+        select: { reference: true, startsAt: true, endsAt: true },
+      });
+      for (const booking of upcoming) {
+        const rules = await rulesFor(tx, { ...court, ...data }, phtDate(booking.startsAt));
+        if (intervalError(booking.startsAt, booking.endsAt, rules))
+          throw new ConflictException(
+            `Resolve upcoming reservation ${booking.reference} before changing court availability or scheduling rules. Existing reservations were not changed.`,
+          );
+      }
+      const updated = await tx.court.update({ where: { id }, data });
       await audit(tx, user.id, 'SCHEDULER_COURT_UPDATED', id, 'SUCCESS', req.correlationId, decision.reason);
       return {
         ...updated,
         message:
           'Court settings saved. Existing reservations keep their original times; review them before closing the court.',
       };
+    });
+  }
+  @Post('courts/:id/archive') async archiveCourt(
+    @Req() req: AuthRequest,
+    @Param('id') id: string,
+    @Body() body: unknown,
+  ) {
+    uuid(id);
+    const decision = parse(confirmation, body);
+    return db.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM "Court" WHERE id = ${id}::uuid FOR UPDATE`;
+      const court = await tx.court.findUnique({ where: { id } });
+      if (!court || court.archivedAt) throw new NotFoundException();
+      const user = await host(req, court.facilityId, tx);
+      const upcoming = await tx.booking.count({
+        where: {
+          courtId: id,
+          status: { in: ['PENDING', 'CONFIRMED'] },
+          endsAt: { gt: new Date() },
+          demoArchivedAt: null,
+        },
+      });
+      const blocks = await tx.allocation.count({
+        where: { courtId: id, active: true, endsAt: { gt: new Date() } },
+      });
+      if (upcoming || blocks)
+        throw new ConflictException(
+          `Resolve ${upcoming} upcoming reservations and ${blocks} active schedule blocks before archiving. Nothing was deleted.`,
+        );
+      await tx.court.update({
+        where: { id },
+        data: { active: false, availabilityStatus: 'UNAVAILABLE', archivedAt: new Date() },
+      });
+      await audit(tx, user.id, 'SCHEDULER_COURT_ARCHIVED', id, 'SUCCESS', req.correlationId, decision.reason);
+      return { message: 'Court archived. All reservation history, maintenance and settings are preserved.' };
     });
   }
   @Get('courts/:id/exceptions') async exceptions(@Req() req: AuthRequest, @Param('id') id: string) {
@@ -263,6 +336,7 @@ export class SchedulerController {
           .default(''),
         date: z.iso.date().optional(),
         courtId: z.uuid().optional(),
+        facilityId: z.uuid().optional(),
         period: z.enum(['', 'upcoming', 'past', 'cancelled']).default(''),
         page: z.coerce.number().int().min(1).max(10000).default(1),
       }),
@@ -273,6 +347,9 @@ export class SchedulerController {
       demoArchivedAt: null,
       ...(q.manage === '1' ? { court: { facility: owned(user.id) } } : { userId: user.id }),
       ...(q.courtId ? { courtId: q.courtId } : {}),
+      ...(q.facilityId
+        ? { court: { facilityId: q.facilityId, ...(q.manage === '1' ? { facility: owned(user.id) } : {}) } }
+        : {}),
       ...(q.status ? { status: q.status } : {}),
       ...(q.period === 'upcoming'
         ? { startsAt: { gt: new Date() }, status: { in: ['PENDING', 'CONFIRMED'] } }
@@ -290,6 +367,7 @@ export class SchedulerController {
           }
         : {}),
       OR: [
+        ...(z.uuid().safeParse(q.q).success ? [{ id: q.q }] : []),
         { reference: { contains: q.q, mode: 'insensitive' as const } },
         { user: { nickname: { contains: q.q, mode: 'insensitive' as const } } },
         { court: { name: { contains: q.q, mode: 'insensitive' as const } } },

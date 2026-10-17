@@ -277,17 +277,21 @@ test('rescheduling updates one reservation, failure preserves original allocatio
     (
       await post(owner, `/scheduler/courts/${otherCourt}`, {
         ...settings,
+        name: 'Court 2',
         defaultDuration: 90,
         active: false,
       })
     ).status,
-    201,
+    409,
   );
   assert.equal(
     (await db.booking.findUniqueOrThrow({ where: { id: bookingId } })).endsAt.getTime(),
     row.endsAt.getTime(),
   );
-  assert.equal((await post(owner, `/scheduler/courts/${otherCourt}`, settings)).status, 201);
+  assert.equal(
+    (await post(owner, `/scheduler/courts/${otherCourt}`, { ...settings, name: 'Court 2' })).status,
+    201,
+  );
   assert.equal(
     (
       await post(owner, `/scheduler/reservations/${bookingId}/change`, {
@@ -342,4 +346,137 @@ test('player requests, private lists, filtering, profile updates and reset denia
     );
   }
   assert((await db.auditEvent.count({ where: { action: { startsWith: 'SCHEDULER_' } } })) >= 8);
+});
+
+test('court names, status and archival preserve scope and history without a surface requirement', async () => {
+  const { surface: ignoredSurface, ...fields } = settings;
+  void ignoredSurface;
+  const created = await post(owner, '/scheduler/courts', {
+    ...fields,
+    name: '  Lifecycle   Court  ',
+    facilityId,
+  });
+  assert.equal(created.status, 201, JSON.stringify(created.body));
+  const id = created.body.id;
+  assert.equal(created.body.name, 'Lifecycle Court');
+  assert.equal(
+    (await post(owner, '/scheduler/courts', { ...fields, name: ' lifecycle   court ', facilityId })).status,
+    409,
+  );
+  for (const availabilityStatus of ['MAINTENANCE', 'UNAVAILABLE', 'AVAILABLE']) {
+    const changed = await post(owner, `/scheduler/courts/${id}`, {
+      ...fields,
+      name: 'Lifecycle Court',
+      availabilityStatus,
+    });
+    assert.equal(changed.status, 201, JSON.stringify(changed.body));
+    assert.equal(changed.body.active, availabilityStatus === 'AVAILABLE');
+    const schedule = await player.agent.get(`/api/scheduler/courts/${id}/schedule?date=${date}`);
+    assert.equal(schedule.status, 200);
+    assert.equal(schedule.body.rules.active, availabilityStatus === 'AVAILABLE');
+    if (availabilityStatus !== 'AVAILABLE')
+      assert(schedule.body.slots.every((s: { status: string }) => s.status !== 'AVAILABLE'));
+  }
+  for (const c of [player, staff, outsider, admin, unverified])
+    assert.equal(
+      (
+        await post(c, `/scheduler/courts/${id}/archive`, {
+          confirmed: true,
+          reason: 'Unauthorized archive attempt',
+        })
+      ).status,
+      403,
+    );
+  assert.equal(
+    (
+      await owner.agent
+        .post(`/api/scheduler/courts/${id}/archive`)
+        .set('Origin', origin)
+        .send({ confirmed: true, reason: 'Missing CSRF' })
+    ).status,
+    403,
+  );
+  assert.equal(
+    (await post(owner, `/scheduler/courts/${id}/archive`, { confirmed: false, reason: 'Not confirmed' }))
+      .status,
+    400,
+  );
+  assert.equal(
+    (
+      await post(owner, `/scheduler/courts/${id}/archive`, {
+        confirmed: true,
+        reason: 'Archive unused fictional court',
+      })
+    ).status,
+    201,
+  );
+  const retained = await db.court.findUniqueOrThrow({ where: { id } });
+  assert(retained.archivedAt);
+  assert.equal(retained.active, false);
+  assert(!(await player.agent.get('/api/scheduler/courts')).body.some((c: { id: string }) => c.id === id));
+  assert.equal((await player.agent.get(`/api/scheduler/courts/${id}/schedule?date=${date}`)).status, 404);
+  assert.equal(
+    await db.auditEvent.count({
+      where: { action: 'SCHEDULER_COURT_ARCHIVED', resourceId: id, actorId: owner.id },
+    }),
+    1,
+  );
+});
+
+test('court changes reject displaced reservations and removal preserves financial and reservation history', async () => {
+  const created = await post(owner, '/scheduler/courts', {
+    ...settings,
+    name: 'Protected history court',
+    facilityId,
+  });
+  const id = created.body.id;
+  const reservation = await post(owner, '/scheduler/reservations', input(10, 60, id)).set(
+    'Idempotency-Key',
+    randomUUID(),
+  );
+  assert.equal(reservation.status, 201, JSON.stringify(reservation.body));
+  for (const update of [
+    { active: false },
+    { availabilityStatus: 'MAINTENANCE' },
+    { openMinute: 720 },
+    { minDuration: 90, defaultDuration: 90 },
+  ]) {
+    const changed = await post(owner, `/scheduler/courts/${id}`, {
+      ...settings,
+      name: 'Protected history court',
+      ...update,
+    });
+    assert.equal(changed.status, 409, JSON.stringify(changed.body));
+    assert(changed.body.message.includes(reservation.body.reference));
+  }
+  assert.equal(
+    (
+      await post(owner, `/scheduler/courts/${id}/archive`, {
+        confirmed: true,
+        reason: 'Must reject active reservation',
+      })
+    ).status,
+    409,
+  );
+  const cancel = await post(owner, `/scheduler/reservations/${reservation.body.id}/change`, {
+    action: 'CANCEL',
+    confirmed: true,
+    reason: 'Resolve fixture reservation first',
+  });
+  assert.equal(cancel.status, 201, JSON.stringify(cancel.body));
+  const archived = await post(owner, `/scheduler/courts/${id}/archive`, {
+    confirmed: true,
+    reason: 'Retain cancelled history during archive',
+  });
+  assert.equal(archived.status, 201, JSON.stringify(archived.body));
+  assert.equal(
+    (await db.booking.findUniqueOrThrow({ where: { id: reservation.body.id } })).status,
+    'CANCELLED',
+  );
+  assert((await db.bookingHistory.count({ where: { bookingId: reservation.body.id } })) >= 2);
+  const filtered = await owner.agent.get(
+    `/api/scheduler/reservations?manage=1&q=${reservation.body.id}&facilityId=${facilityId}`,
+  );
+  assert.equal(filtered.body.total, 1);
+  assert(filtered.body.items[0].createdAt);
 });

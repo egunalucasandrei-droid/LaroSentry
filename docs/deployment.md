@@ -47,3 +47,19 @@ Before enabling production: complete remaining workflow/authorization tests; con
 ## Publication preparation update ? 2026-10-14
 
 See [publication review](publication-review.md) for launch blockers and isolated demo setup. Demo seed/bootstrap commands now require recognized loopback demo/test databases; production remains gated. Migration 202610140006_policy_acceptance adds nullable privacyVersion and policyAcceptedAt fields without relabeling legacy acceptance. Registration validates and records the current shared policy bundle. New local demos create four fictional roles in a new database; no existing database is reset. Complete policy approval, retention/erasure, public support and deployment review before launch.
+
+## Preparing the court-lifecycle update (not deployed)
+
+The 2026-10-17 NOLTA/theme update is local and requires migration `202610170009_court_lifecycle` before the new API starts. It only adds columns/check constraint and backfills inactive status; no drops/resets/credential changes are included. The previous deployed bundle remains live until a separately approved deployment.
+
+For local use:
+
+```powershell
+.\pnpm.cmd db:generate
+$env:DEMO_MODE='true'
+.\pnpm.cmd demo:start
+```
+
+`demo:start` applies migrations to the existing selected local demo and keeps data/passwords. Stop an older running demo terminal before restarting after schema changes. Normal development database instead uses `db:migrate` then `dev` after generation.
+
+After explicit approval for the intended environment: back up the intended database using the established workflow, apply `prisma migrate deploy` with its migration role, build/publish the tested commit and use the existing Render service. Keep production bypass off and existing secret/config files unchanged. With the already configured authorized CLI, the established deployment command is `render deploys create srv-db95nnbodcbs73d3gjog --commit <reviewed-commit-sha> --confirm -o json`; it must not be run until the migration and deployment have been authorized. No new service or paid resource is needed. Verify health, normal MFA, scoped court actions and responsive/theme behavior after deployment; no live verification is claimed for this local update.

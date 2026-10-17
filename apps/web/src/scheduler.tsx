@@ -16,7 +16,8 @@ import './scheduler.css';
 type Court = {
   id: string;
   name: string;
-  surface: string;
+  availabilityStatus: string;
+  archivedAt: string | null;
   sport: string;
   hourlyRate: number;
   capacity: number;
@@ -49,6 +50,7 @@ type Reservation = {
   court: Court;
   user: { id: string; nickname: string };
   source: string;
+  createdAt: string;
 };
 type PageResult = { items: Reservation[]; total: number; page: number; pageSize: number };
 type Selection = { court: Court; slot: Slot; duration: number };
@@ -182,7 +184,6 @@ export default function Scheduler() {
         ['/scheduler', 'Home'],
         ['/scheduler/book', 'Book a Court'],
         ['/scheduler/reservations', 'My Reservations'],
-        ['/scheduler/profile', 'Profile'],
       ];
   return (
     <section className="nolta">
@@ -202,7 +203,9 @@ export default function Scheduler() {
             NOLTA<small>Scheduling by LaroSentry</small>
           </span>
         </Link>
-        <span className="nolta-tag">{manage ? 'COURT MANAGEMENT' : 'USER MODE'}</span>
+        <span className={`nolta-tag ${manage ? 'management-mode' : 'user-mode'}`}>
+          {manage ? 'ADMIN MODE' : 'USER MODE'}
+        </span>
       </header>
       <nav className="nolta-nav" aria-label="NOLTA navigation">
         {nav.map(([to, label]) => (
@@ -217,7 +220,6 @@ export default function Scheduler() {
             {manage ? 'Open user mode' : 'Manage assigned courts'}
           </Link>
         )}
-        <Link to="/scheduler/profile">Account / Logout</Link>
         {user.role === 'ADMIN' && <Link to="/admin">Platform administration</Link>}
       </div>
       {page === 'courts' && manage ? (
@@ -229,7 +231,7 @@ export default function Scheduler() {
       ) : page === 'reservations' ? (
         <Reservations manage={false} />
       ) : page === 'profile' ? (
-        <Profile />
+        <Navigate to="/app/settings/profile" replace />
       ) : (
         <UserHome />
       )}
@@ -260,8 +262,8 @@ function UserHome() {
             <ErrorState error={courts.error} />
           ) : (
             <p>
-              {courts.data?.length ?? '…'} active courts at published facilities. Availability depends on your
-              selected date.
+              {courts.data?.filter((c) => c.active && c.availabilityStatus === 'AVAILABLE').length ?? '…'}{' '}
+              active courts at published facilities. Availability depends on your selected date.
             </p>
           )}
           <Link to="/scheduler/book">Browse courts and times</Link>
@@ -471,9 +473,7 @@ function Availability({
         />
         <section className="nolta-availability">
           <h2>Available time slots</h2>
-          <p>
-            {court.surface} · {formatMoney(court.hourlyRate)} / hour · Philippine time
-          </p>
+          <p>{formatMoney(court.hourlyRate)} / hour · Philippine time</p>
           <p className="nolta-help">
             Minimum {court.minDuration} min · Starts every {court.startInterval} min ·{' '}
             {court.maxDuration ? `Maximum ${court.maxDuration} min` : 'Fits within opening hours'}. Pending
@@ -498,7 +498,9 @@ function Availability({
                         ? 'Maintenance / unavailable'
                         : s.status === 'AVAILABLE'
                           ? 'Available'
-                          : 'Unavailable';
+                          : court.availabilityStatus === 'MAINTENANCE'
+                            ? 'Maintenance / unavailable'
+                            : 'Unavailable';
                   return (
                     <button
                       type="button"
@@ -545,6 +547,7 @@ function Availability({
   );
 }
 function SchedulePage({ manage }: { manage: boolean }) {
+  const requestedCourt = new URLSearchParams(useLocation().search).get('court') ?? undefined;
   const courts = useCourts(manage),
     [selection, setSelection] = useState<Selection | null>(null),
     [review, setReview] = useState(false);
@@ -568,7 +571,12 @@ function SchedulePage({ manage }: { manage: boolean }) {
       ) : courts.error ? (
         <ErrorState error={courts.error} />
       ) : (
-        <Availability manage={manage} courts={courts.data} onSelect={setSelection} />
+        <Availability
+          manage={manage}
+          courts={courts.data}
+          initialCourt={courts.data.some((c) => c.id === requestedCourt) ? requestedCourt : undefined}
+          onSelect={setSelection}
+        />
       )}
       {selection && (
         <div className="nolta-summary">
@@ -695,6 +703,8 @@ function CourtForm({
   onSaved?: () => void;
 }) {
   const action = useAction();
+  const [selectedFacility, setSelectedFacility] = useState('');
+  const defaults = facilities.find((f) => f.id === selectedFacility) ?? facilities[0];
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
@@ -702,11 +712,11 @@ function CourtForm({
       await post(`/scheduler/courts${court ? `/${court.id}` : ''}`, {
         facilityId: f.get('facilityId'),
         name: f.get('name'),
-        surface: f.get('surface'),
         sport: f.get('sport'),
         hourlyRate: Math.round(Number(f.get('price')) * 100),
         capacity: Number(f.get('capacity')),
-        active: f.get('active') === 'on',
+        active: f.get('availabilityStatus') === 'AVAILABLE',
+        availabilityStatus: f.get('availabilityStatus'),
         openMinute: clockMinute(f.get('open')),
         closeMinute: clockMinute(f.get('close')) || 1440,
         minDuration: Number(f.get('minimum')),
@@ -727,7 +737,7 @@ function CourtForm({
         {!court && (
           <label>
             Facility
-            <select name="facilityId" required>
+            <select name="facilityId" aria-label="Facility" required onChange={(e) => setSelectedFacility(e.target.value)}>
               {facilities.map((f) => (
                 <option key={f.id} value={f.id}>
                   {f.name}
@@ -739,16 +749,6 @@ function CourtForm({
         <label>
           Court name
           <input name="name" defaultValue={court?.name} required minLength={2} maxLength={80} />
-        </label>
-        <label>
-          Surface
-          <input
-            name="surface"
-            defaultValue={court?.surface ?? 'Hard'}
-            required
-            minLength={2}
-            maxLength={40}
-          />
         </label>
         <label>
           Sport
@@ -782,14 +782,16 @@ function CourtForm({
           />
         </label>
         <ClockInput
+          key={`open-${court?.id ?? defaults?.id}`}
           name="open"
           label="Opens (AM/PM)"
-          minute={court?.openMinute ?? (court?.facility.openHour ?? 6) * 60}
+          minute={court?.openMinute ?? (court?.facility.openHour ?? defaults?.openHour ?? 6) * 60}
         />
         <ClockInput
+          key={`close-${court?.id ?? defaults?.id}`}
           name="close"
           label="Closes (AM/PM)"
-          minute={court?.closeMinute ?? (court?.facility.closeHour ?? 22) * 60}
+          minute={court?.closeMinute ?? (court?.facility.closeHour ?? defaults?.closeHour ?? 22) * 60}
         />
         <label>
           Minimum duration (minutes)
@@ -829,13 +831,21 @@ function CourtForm({
           />
         </label>
       </div>
-      <label className="nolta-check">
-        <input name="active" type="checkbox" defaultChecked={court?.active ?? true} />
-        Court active
+      <label>
+        Court status
+        <select
+          name="availabilityStatus"
+          aria-label="Court status"
+          defaultValue={court?.availabilityStatus ?? (court?.active === false ? 'UNAVAILABLE' : 'AVAILABLE')}
+        >
+          <option value="AVAILABLE">Available</option>
+          <option value="UNAVAILABLE">Unavailable</option>
+          <option value="MAINTENANCE">Maintenance</option>
+        </select>
       </label>
       <p className="nolta-help">
-        Deactivation prevents new bookings; it does not delete history or cancel existing reservations. Review
-        affected reservations separately.
+        Unavailable and Maintenance prevent new reservations. Resolve affected confirmed reservations before
+        changing hours, rules or status; conflicting changes are rejected and history is preserved.
       </p>
       <Confirmation />
       <button className="nolta-button" disabled={action.busy || !facilities.length}>
@@ -858,9 +868,12 @@ function CourtsPage() {
       queryKey: ['scheduler', 'facilities'],
       queryFn: () => api<{ id: string; name: string }[]>('/scheduler/facilities'),
     }),
-    [editing, setEditing] = useState<Court | null | undefined>(undefined);
+    [editing, setEditing] = useState<Court | null | undefined>(undefined),
+    [archiving, setArchiving] = useState<Court | null>(null);
+  const archive = useAction();
   return (
     <>
+      {archive.feedback}
       <div className="nolta-calendar-head">
         <h1>Courts</h1>
         <button className="nolta-button" onClick={() => setEditing(null)}>
@@ -875,10 +888,16 @@ function CourtsPage() {
         <div className="nolta-grid">
           {courts.data.map((c) => (
             <article className="nolta-card" key={c.id}>
-              <span className="nolta-tag">{c.active ? 'Active' : 'Inactive'}</span>
+              <span className="nolta-tag">
+                {c.availabilityStatus === 'MAINTENANCE'
+                  ? 'Maintenance'
+                  : c.active
+                    ? 'Available'
+                    : 'Unavailable'}
+              </span>
               <h2>{c.name}</h2>
               <p>
-                {c.facility.name} · {c.surface} · {c.sport}
+                {c.facility.name} · {c.sport}
               </p>
               <p>
                 {displayMinute(c.openMinute ?? c.facility.openHour * 60)} –{' '}
@@ -888,12 +907,49 @@ function CourtsPage() {
                 {c.minDuration} min minimum · {c.defaultDuration} min default · {formatMoney(c.hourlyRate)}
                 /hour
               </p>
-              <button onClick={() => setEditing(c)}>Edit court / activation</button>
+              <div className="nolta-actions">
+                <button onClick={() => setEditing(c)}>Edit court / activation</button>
+                <Link to={`/scheduler/admin/schedule?court=${c.id}`}>Open schedule</Link>
+                <button className="nolta-danger" onClick={() => setArchiving(c)}>
+                  Remove court
+                </button>
+              </div>
             </article>
           ))}
         </div>
       )}
-      {!courts.data?.length && <p>No assigned courts. You need an owner membership to manage a facility.</p>}
+      {!courts.data?.length && <p>No courts to manage. Add a court to an assigned facility when needed.</p>}
+      {archiving && (
+        <Modal title="Remove court" onClose={() => setArchiving(null)}>
+          <p>
+            Archive {archiving.name}? It will leave future booking selections. All historical reservations,
+            maintenance and settings are retained. Resolve upcoming reservations and active blocks first.
+          </p>
+          {archive.feedback}
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              const f = new FormData(e.currentTarget);
+              if (
+                await archive.run(
+                  () =>
+                    post(`/scheduler/courts/${archiving.id}/archive`, {
+                      confirmed: true,
+                      reason: f.get('reason'),
+                    }),
+                  'Court archived; history preserved.',
+                )
+              )
+                setArchiving(null);
+            }}
+          >
+            <Confirmation label="I confirm court archival and understand that history is preserved." />
+            <button className="nolta-danger" disabled={archive.busy}>
+              Archive court
+            </button>
+          </form>
+        </Modal>
+      )}
       {editing !== undefined && (
         <Modal title={editing ? 'Edit court' : 'Add Court'} onClose={() => setEditing(undefined)}>
           {facilities.error ? (
@@ -1045,6 +1101,7 @@ function Reservations({ manage }: { manage: boolean }) {
     [status, setStatus] = useState(''),
     [date, setDate] = useState(''),
     [courtId, setCourt] = useState(''),
+    [facilityId, setFacility] = useState(''),
     [period, setPeriod] = useState(''),
     [page, setPage] = useState(1),
     [selected, setSelected] = useState<Reservation | null>(null),
@@ -1061,6 +1118,7 @@ function Reservations({ manage }: { manage: boolean }) {
     period,
     ...(date ? { date } : {}),
     ...(courtId ? { courtId } : {}),
+    ...(facilityId ? { facilityId } : {}),
   });
   const list = useQuery({
     queryKey: ['scheduler', 'reservations', query.toString()],
@@ -1103,6 +1161,19 @@ function Reservations({ manage }: { manage: boolean }) {
           <input type="date" value={date} onChange={(e) => change(() => setDate(e.target.value))} />
         </label>
         <label>
+          Filter facility
+          <select value={facilityId} onChange={(e) => change(() => setFacility(e.target.value))}>
+            <option value="">All facilities</option>
+            {[...new Map(courts.data?.map((c) => [c.facility.id, c.facility.name]) ?? []).entries()].map(
+              ([id, name]) => (
+                <option key={id} value={id}>
+                  {name}
+                </option>
+              ),
+            )}
+          </select>
+        </label>
+        <label>
           Filter court
           <select value={courtId} onChange={(e) => change(() => setCourt(e.target.value))}>
             <option value="">All courts</option>
@@ -1130,6 +1201,7 @@ function Reservations({ manage }: { manage: boolean }) {
             setStatus('');
             setDate('');
             setCourt('');
+            setFacility('');
             setPeriod('');
             setPage(1);
           }}
@@ -1157,6 +1229,7 @@ function Reservations({ manage }: { manage: boolean }) {
                 <div>
                   <span className="nolta-tag">{b.status}</span>
                   <h2>{b.court.name}</h2>
+                  {manage && <p className="nolta-help">Created {formatTime(b.createdAt)}</p>}
                   <p>
                     {b.reference} · {manage ? b.user.nickname : 'Your reservation'}
                   </p>
@@ -1380,37 +1453,5 @@ function ResetDemo({ onClose, onSaved }: { onClose: () => void; onSaved: () => v
         </>
       )}
     </Modal>
-  );
-}
-function Profile() {
-  const me = useUser(),
-    action = useAction();
-  const user = me.data!.user!;
-  async function submit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const f = new FormData(e.currentTarget);
-    await action.run(() => post('/scheduler/profile', { nickname: f.get('nickname') }), 'Profile saved.');
-  }
-  return (
-    <>
-      <h1>Profile</h1>
-      {action.feedback}
-      <form className="nolta-card" onSubmit={submit}>
-        <label>
-          Account name
-          <input name="nickname" defaultValue={user.nickname} minLength={2} maxLength={40} required />
-        </label>
-        <p>Email: {user.email}</p>
-        <p>Role: {user.role.replaceAll('_', ' ')}</p>
-        <button className="nolta-button" disabled={action.busy}>
-          Save profile
-        </button>
-        <Link to="/app/settings">Privacy and account settings</Link>
-        <Link to="/app/security">Account security and MFA</Link>
-      </form>
-      <button onClick={() => void action.run(() => post('/auth/logout'), 'Logged out.')}>
-        Log out of NOLTA
-      </button>
-    </>
   );
 }

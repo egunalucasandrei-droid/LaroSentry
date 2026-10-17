@@ -1,0 +1,137 @@
+﻿:root {
+  color-scheme: light;
+  --paper: #fff;
+  --soft-paper: #f7f8f3;
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  color: #e4eee8;
+  background: #101916;
+  --paper: #192620;
+  --soft-paper: #15211c;
+  --ink: #e4eee8;
+  --navy: #142e32;
+  --green: #99d4b5;
+  --muted: #b1c2b8;
+  --line: #41574a;
+  --cream: #15211c;
+}
+.theme-toggle {
+  flex: 0 0 44px;
+  min-height: 44px;
+  border-radius: 10px;
+  color: var(--ink);
+}
+.theme-toggle:hover {
+  background: var(--cream);
+}
+:root[data-theme='dark'] :is(input, select, textarea) {
+  background: #15211c;
+  color: #e4eee8;
+  border-color: #597364;
+}
+:root[data-theme='dark'] input::placeholder,
+:root[data-theme='dark'] textarea::placeholder {
+  color: #b1c2b8;
+}
+:root[data-theme='dark']
+  :is(
+    .panel,
+    .facility-card,
+    .floating-card,
+    .search-card,
+    .notice,
+    .auth-card,
+    .workspace-menu,
+    .site-header,
+    .site-header nav.open,
+    dialog
+  ) {
+  background-color: var(--paper);
+  color: var(--ink);
+  border-color: var(--line);
+}
+:root[data-theme='dark'] :is(.muted, .small, .facility-card p, .facility-meta, .facility-card .eyebrow) {
+  color: var(--muted);
+}
+:root[data-theme='dark'] :is(.btn, .nolta-button) {
+  background: #285f47;
+  color: #fff;
+}
+:root[data-theme='dark'] .btn.secondary {
+  background: #22392c;
+  color: #e4eee8;
+  border-color: #597364;
+}
+:root[data-theme='dark'] :is(.notice.error, .error) {
+  background: #3d2524;
+  color: #ffcbc3;
+  border-color: #9b635d;
+}
+:root[data-theme='dark']
+  :is(.badge, .workspace-nav a.active, .brand-mark, .notice:not(.error), .presentation-paths a) {
+  background: #243c2d;
+  color: #dcf0d8;
+}
+:root[data-theme='dark'] :is(.table-wrap, th, td) {
+  border-color: var(--line);
+}
+:root[data-theme='dark'] :focus-visible {
+  outline-color: #f4d86a;
+}
+:root[data-theme='dark'] .nolta {
+  --n-ink: #e4eee8;
+  --n-muted: #bac9bf;
+  --n-paper: #15211c;
+  --n-line: #526155;
+}
+:root[data-theme='dark'] :is(.nolta-card, .nolta-modal) {
+  background: #192620;
+  color: #e4eee8;
+  border-color: #526155;
+}
+:root[data-theme='dark']
+  :is(.nolta-nav, .nolta-views, .nolta-tag, .nolta-details, .nolta-summary, .nolta-notice) {
+  background: #26392d;
+  color: #e4eee8;
+}
+:root[data-theme='dark'] :is(.nolta-nav a.active, .nolta-views button[aria-pressed='true']) {
+  background: #385947;
+  color: #fff;
+}
+:root[data-theme='dark'] .nolta-slot {
+  background: #203a30;
+  color: #e4eee8;
+  border-color: #658675;
+}
+:root[data-theme='dark'] .nolta-slot:disabled {
+  background: #343833;
+  color: #c5cdc6;
+  opacity: 1;
+}
+:root[data-theme='dark'] .nolta-slot[aria-pressed='true'] {
+  background: #315d70;
+  color: #fff;
+  border-color: #b7dfee;
+}
+:root[data-theme='dark'] :is(.nolta-calendar button, .nolta-day) {
+  color: #e4eee8;
+}
+:root[data-theme='dark'] .nolta :focus-visible,
+:root[data-theme='dark'] .nolta-modal :focus-visible {
+  outline-color: #f4d86a;
+}
+:root[data-theme='dark'] {
+  --theme-surface: #192620;
+  --theme-text: #e4eee8;
+  --theme-muted: #bccdc1;
+  --theme-border: #526155;
+}
+:root[data-theme='dark'] .nolta-tag.user-mode {
+  background: #264b37;
+  color: #e4eee8;
+}
+:root[data-theme='dark'] .nolta-calendar-head button[aria-pressed='true'] {
+  background: #385947;
+  color: #fff;
+}
