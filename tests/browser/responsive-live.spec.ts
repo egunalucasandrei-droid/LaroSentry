@@ -34,6 +34,14 @@ test('live responsive public pages, booking availability, API/database and produ
     await expect(page.locator('.loading')).toHaveCount(0);
     await expect(page.getByRole('alert')).toHaveCount(0);
     await fits(page);
+    if (path === '/facilities') {
+      await page.setViewportSize({ width: 360, height: 800 });
+      for (const selector of ['.save-button', '.round-arrow', '.compare-button']) {
+        const bounds = await page.locator(selector).first().boundingBox();
+        expect(bounds!.width).toBeGreaterThanOrEqual(44);
+        expect(bounds!.height).toBeGreaterThanOrEqual(44);
+      }
+    }
     await expect(page.getByText('DEMO MODE', { exact: false })).toHaveCount(0);
   }
   await page.setViewportSize({ width: 360, height: 800 });
@@ -93,6 +101,10 @@ for (const role of ['PLAYER', 'FACILITY_OWNER', 'FACILITY_STAFF', 'ADMIN'])
           .locator('.nolta-slots')
           .evaluate((element) => getComputedStyle(element).gridTemplateColumns.split(' ').length),
       ).toBe(2);
+      const slot = page.locator('.nolta-slot:enabled').first();
+      await slot.click();
+      await expect(slot).toHaveAttribute('aria-pressed', 'true');
+      await expect(slot).toContainText('Selected');
       await page.screenshot({ path: '.local/responsive-evidence/live-slots-360.png', fullPage: true });
       await page.goto('/app/bookings');
       await expect(page.locator('.workspace-toggle')).toBeVisible();

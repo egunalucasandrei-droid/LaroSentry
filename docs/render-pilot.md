@@ -1,5 +1,21 @@
 # Free Render test pilot
 
+## Latest verified deployment - 2026-10-17
+
+**https://larosentry-test.onrender.com** is live on application commit `70eaf8110c95eecffc321eb8995e2fb834a400d4`, deploy `dep-db9joru1egvs73fhmpq0`. Five read-only live browser tests passed (28.2s) after deployment. Verified public/login/signup/discovery/facility/security pages, player bookings and scheduler slot selection, responsive navigation, 44px discovery controls, 360/390/430/768/1440px widths, all four role logins, Secure/HttpOnly/SameSite cookies, logout, MFA/admin API denials, CSP, HTTPS and database connectivity. No production bypass/banner was enabled. The actual selected-slot mobile screenshot was inspected.
+
+Owner/staff/admin test accounts stop at the required MFA gate; live privileged dashboard actions were not performed or claimed. Those workflows passed isolated local tests with real MFA. Existing live MFA enrollment/passwords and production records were preserved. No migration, seed, environment replacement or paid resource was added. CLI resource status still reports `free` for both existing services. Free database expiry remains **2026-11-16 01:09 Asia/Shanghai**. Follow-up documentation/test-only commits do not change the deployed bundle; auto deploy is disabled.
+
+Read-only repeat command (uses ignored private pilot credentials, no signup/booking writes):
+
+```powershell
+$env:BROWSER_BASE_URL='https://larosentry-test.onrender.com'
+$env:RENDER_RESPONSIVE_E2E='1'
+.\pnpm.cmd exec playwright test tests/browser/responsive-live.spec.ts
+```
+
+## Initial pilot checkpoint (historical)
+
 The owner selected Render and explicitly requires free services only. The previous Vercel plan is superseded. This is a fictional-data test pilot, not a commercial launch or security certification.
 
 **Live site:** https://larosentry-test.onrender.com — [login](https://larosentry-test.onrender.com/login). Verified on 2026-10-17 against application commit `72d5677d28c7a5123e06cbcace2ff4cf4942f98b`, Render deploy `dep-db9iht6q1p3s738cnhb0`, status `live`. Seven live Playwright tests passed (37.0s): mobile public pages/records/CSP, four role logins and secure session/MFA gates, booking quote/request/UI listing/cancellation, and accurate verification-unavailable signup. Health returned HTTP 200/database connected after external DB access was disabled. Mobile screenshot visually inspected. Local verification passed: 55 API integrations, 9 unit tests, lint/typecheck/build and direct compiled-production startup checks. Shared privileged accounts remain available for tester-controlled MFA enrollment; isolated tests cover actual MFA/action workflows.
@@ -46,6 +62,6 @@ $env:RENDER_PILOT_E2E='1'
 
 The suite creates one synthetic unverified account and a cancelled test booking while preserving audit/history. It does not replace shared-account MFA. Browser artifacts remain private and ignored.
 
-# Responsive update - 2026-10-17
+## Responsive update procedure - 2026-10-17
 
-The existing free service is being updated after local responsive verification. The same service/database, build/start commands and production environment are retained. No production seed, database reset, MFA reset, provider change or paid resource is part of this update. Final deploy ID, application commit and live read-only checks are recorded in the completion entry below.
+After successful local checks, source was pushed to GitHub main and deployed with the authorized CLI: `render deploys create srv-db95nnbodcbs73d3gjog --commit 70eaf8110c95eecffc321eb8995e2fb834a400d4 --confirm -o json`. The CLI config directory is the ignored `.local/render-cli`. Build/start commands and production environment were retained. Final deploy ID, application commit and live read-only results are recorded at the top of this guide. The older seven-test pilot suite above creates synthetic signup/booking records; use the five-test read-only suite for non-mutating verification.

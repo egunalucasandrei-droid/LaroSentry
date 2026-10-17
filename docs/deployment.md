@@ -2,6 +2,8 @@
 
 ## Responsive update - 2026-10-17
 
+**Live verified application:** https://larosentry-test.onrender.com - commit `70eaf8110c95eecffc321eb8995e2fb834a400d4`, deploy `dep-db9joru1egvs73fhmpq0`, status `live`. Five final read-only live tests passed (28.2s); health is `ok`, database `connected`. Both existing resources remain free. Real privileged actions passed locally with MFA; live shared privileged accounts remain behind their enrollment gate. Documentation/test-only follow-ups do not change the deployed bundle.
+
 The responsive update uses the same free web service and private database. No migration or seeding is required. Build/start commands and production environment remain unchanged; `DEMO_MODE` stays absent/default false and `LOCAL_DEMO_QUICK_ACCESS=0`. [Responsive checks](responsive.md) and [current Render verification](render-pilot.md) record the final deployment result. Historical checkpoints below refer to earlier commits.
 
 ## Live free Render pilot — 2026-10-17
