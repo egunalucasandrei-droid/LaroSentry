@@ -167,7 +167,9 @@ export class AuthController {
     }
     return {
       message:
-        'If these details can be registered, a verification email has been queued. Sign in to choose email or mobile verification first. Local email is captured by Mailpit; delivery is not guaranteed.',
+        env.EMAIL_PROVIDER === 'unavailable'
+          ? 'If these details can be registered, an account has been created. Email and SMS delivery are unavailable in this test pilot. Use an authorized fictional test account to test verified-account features.'
+          : 'If these details can be registered, a verification email has been queued. Sign in to choose email or mobile verification first. Local email is captured by Mailpit; delivery is not guaranteed.',
     };
   }
 
