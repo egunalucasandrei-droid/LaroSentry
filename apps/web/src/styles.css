@@ -3155,4 +3155,16 @@ dialog {
   .results-bar select {
     min-height: 44px;
   }
+  .save-button,
+  .round-arrow {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .compare-button {
+    min-height: 44px;
+    padding: 10px 0;
+    font-size: 0.85rem;
+  }
 }

@@ -20,6 +20,13 @@ for (const [name, width, height] of [
     await page.getByRole('button', { name: 'Find a court' }).click();
     await expect(page.getByRole('heading', { name: 'Find your next court.' })).toBeVisible();
     await expect(page.locator('.facility-card').first()).toBeVisible();
+    if (width === 390) {
+      for (const selector of ['.save-button', '.round-arrow', '.compare-button']) {
+        const bounds = await page.locator(selector).first().boundingBox();
+        expect(bounds!.height).toBeGreaterThanOrEqual(44);
+        expect(bounds!.width).toBeGreaterThanOrEqual(44);
+      }
+    }
     await page.getByRole('combobox', { name: 'Sport', exact: true }).selectOption('Basketball');
     await expect(page.locator('.facility-card').first()).toBeVisible();
     await page.locator('.facility-card h3 a').first().click();

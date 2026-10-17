@@ -45,7 +45,7 @@ Files for this responsive task:
 
 - Interface: `apps/web/src/main.tsx`, `workspace.tsx`, `public.tsx`, `court-calendar.tsx`, `scheduler.tsx`, `styles.css`, `scheduler.css`.
 - Runner: `package.json`, `scripts/test-database.mjs`.
-- Browser coverage: `tests/browser/responsive.spec.ts`, `responsive-live.spec.ts`, `admin.spec.ts`, `scheduler.spec.ts`, `onboarding.spec.ts`. The onboarding test now waits for SMS-send completion before reading its local inbox, avoiding a race without relaxing verification.
+- Browser coverage: `tests/browser/responsive.spec.ts`, `responsive-live.spec.ts`, `admin.spec.ts`, `scheduler.spec.ts`, `onboarding.spec.ts`, `discovery.spec.ts`. The onboarding test now waits for SMS-send completion before reading its local inbox, avoiding a race without relaxing verification. Discovery also asserts 44px minimum save/view/compare targets on mobile.
 - Documentation: `README.md`, `docs/responsive.md`, `progress.md`, `render-pilot.md`, `deployment.md`.
 
 The deployment also preserves the already-completed local demo/system-framework checkpoint `5f69337`. Its bypass remains default OFF and is rejected in production; no demo seed is part of the deployment command.
