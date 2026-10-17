@@ -81,6 +81,8 @@ test('public routes across all widths; mobile menu keyboard and map', async ({ p
     .getByRole('link', { name: 'Find courts', exact: true })
     .click();
   await expect(menu).toHaveAttribute('aria-expanded', 'false');
+  await expect(page).toHaveURL('/facilities');
+  await expect(page.getByRole('heading', { name: 'Find your next court.', exact: true })).toBeVisible();
   await menu.click();
   await page
     .getByRole('navigation', { name: 'Main navigation' })
@@ -140,6 +142,7 @@ const routes: Record<string, string[]> = {
   ],
   ADMIN: [
     '/admin',
+    '/admin/booking-requests',
     '/admin/applications',
     '/admin/facilities',
     '/admin/users',

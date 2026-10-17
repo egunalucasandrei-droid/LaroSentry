@@ -57,14 +57,40 @@ async function inform(tx: Tx, userId: string, title: string, href: string) {
 export class AdminController {
   @Get('overview') async overview(@Req() req: AuthRequest) {
     await administrator(req);
-    const [pendingApplications, openReports, unresolvedAlerts] = await Promise.all([
+    const [
+      pendingApplications,
+      openReports,
+      unresolvedAlerts,
+      publishedFacilities,
+      registeredUsers,
+      paymentRecords,
+      recentActions,
+    ] = await Promise.all([
       db.facilityApplication.count({
         where: { state: { in: ['PENDING', 'UNDER_REVIEW', 'CLARIFICATION'] } },
       }),
       db.userReport.count({ where: { state: { in: ['OPEN', 'REVIEWING'] } } }),
       db.securityAlert.count({ where: { state: { in: ['OPEN', 'ACKNOWLEDGED'] } } }),
+      db.facility.count({ where: { status: 'PUBLISHED' } }),
+      db.user.count(),
+      db.paymentRecord.count(),
+      db.auditEvent.findMany({
+        where: { action: { startsWith: 'ADMIN_' } },
+        select: { id: true, action: true, outcome: true, createdAt: true },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        take: 5,
+      }),
     ]);
-    return { pendingApplications, openReports, unresolvedAlerts, checkedAt: new Date() };
+    return {
+      pendingApplications,
+      openReports,
+      unresolvedAlerts,
+      publishedFacilities,
+      registeredUsers,
+      paymentRecords,
+      recentActions,
+      checkedAt: new Date(),
+    };
   }
   @Get('applications') async applications(@Req() req: AuthRequest, @Query() query: unknown) {
     await administrator(req);

@@ -289,6 +289,17 @@ function GameList() {
               </p>
               <p className="small">Organized by {g.organizer}</p>
               <span className="badge">{g.participation ?? g.status}</span>
+              <p className="small muted">
+                {g.isOrganizer
+                  ? 'Your game · manage requests and invitations'
+                  : g.participation === 'REQUESTED'
+                    ? 'Join request sent · wait for organizer approval'
+                    : g.participation === 'APPROVED'
+                      ? 'Your place is approved'
+                      : g.spaces > 0
+                        ? 'Request to join · organizer approval required'
+                        : 'Currently full · view game details'}
+              </p>
             </Link>
           ))}
         </div>

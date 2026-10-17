@@ -126,3 +126,7 @@ Applicants submit under `/app/applications`; pending facilities stay private unt
 ## Responsive interface
 
 Mobile navigation, role workspaces and compact court time slots are documented in [responsive verification](docs/responsive.md). Run `.\pnpm.cmd test:responsive:e2e` from the repository root for the isolated width/role audit. Current deployment evidence and free-service limits are in [Render pilot](docs/render-pilot.md).
+
+## Client presentation
+
+See [the presentation walkthrough and client checklist](docs/demo-presentation-guide.md). After existing local demo setup, `demo:scenarios` adds a safe daily batch of fictional booking/payment/game/report/application/security-review scenarios without deleting history. It refuses production and Render; never use local demo credentials/settings online. The walkthrough describes the four distinct role views, normal online MFA, payment limitations, safe new-database rehearsal reset and exact startup commands.

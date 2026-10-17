@@ -33,7 +33,8 @@
     "db:backup": "node scripts/backup.mjs backup",
     "db:restore:test": "node scripts/backup.mjs restore",
     "demo:setup": "node scripts/demo.mjs setup",
-    "demo:start": "node scripts/demo.mjs start"
+    "demo:start": "node scripts/demo.mjs start",
+    "demo:scenarios": "node scripts/demo.mjs scenarios"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.11.1",

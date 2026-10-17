@@ -445,7 +445,7 @@ function PreferenceForm({ preferences: p, done }: { preferences: Preferences; do
     </form>
   );
 }
-export function Recommendations() {
+export function Recommendations({ embedded = false }: { embedded?: boolean }) {
   const r = useQuery({
     queryKey: ['recommendations'],
     queryFn: () =>
@@ -453,7 +453,7 @@ export function Recommendations() {
   });
   return (
     <>
-      <h1>Recommended for you</h1>
+      {embedded ? <h2>Recommended for you</h2> : <h1>Recommended for you</h1>}
       <p>
         Simple rules use your optional sport, area, court and budget preferences.{' '}
         <Link to="/app/settings/preferences">Update preferences</Link> ·{' '}

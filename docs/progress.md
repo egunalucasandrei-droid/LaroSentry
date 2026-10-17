@@ -1,4 +1,21 @@
-# Implementation progress
+﻿# Implementation progress
+
+## Client-presentation refresh - 2026-10-17
+
+Inspected application/API/schema/routes/tests/docs before changes. Preserved the stack, design, data, booking state machine, approvals, MFA, sessions and resource permissions. Added own-account player metrics/recent activity, searchable published/visible report targets with POST revalidation, actual admin totals/recent audit, permission-aware owner/staff shortcuts, homepage path cards, real court/sport metadata, improved original court SVGs, calendar request checklist, external-payment/QR guidance and public-game action states.
+
+Added local-only transactional daily `demo:scenarios` and [presentation guide/checklist](demo-presentation-guide.md). Fixtures use a dedicated fictional court and preserve existing records/decisions/accounts/passwords/MFA. They include a pending request, paid confirmed booking, public game, saved venue/updates, synthetic report/application/security-review exercise and optional in-window check-in. Isolated runner prepares twice to verify idempotence; actual local demo added three bookings and correctly skipped late-night check-in outside opening hours. Safe rehearsal reset selects a new retained database; no deletion or remote seed. No schema/migration/dependency change.
+
+Passed: 11 unit, 57 PostgreSQL integration, 14 ON/OFF demo API, 25 local browser cases plus four existing-account login/distinct-workspace checks; lint/typecheck/build. Public/calendar widths 320/360/375/390/412/430/768/820/1024/1280/1440/1920; role pages 320/360/390/430/768/1440, now including admin booking requests. Actual report persistence, owner approval/player history, manual payment/QR, admin decisions/restrictions/alerts/audit, staff check-in and real MFA are covered. Fixed an initial report label ambiguity, navigation-test timing race and Date formatting type error, then reran checks successfully. Inspected mobile homepage and desktop player/admin screenshots; evidence/logs remain private. [Full results and commands](testing.md#presentation-refresh-verification---2026-10-17).
+
+Changed files:
+
+- API: `apps/api/src/{admin.controller,submissions.controller,workspaces.controller,presentation-scenarios,presentation-seed}.ts`, `apps/api/test/workspaces.test.ts`.
+- Web: `apps/web/src/{admin,community,court-art,onboarding,player-home,public,role-workspaces,scheduler,submissions,workspace}.tsx`, `apps/web/src/styles.css`.
+- Scripts/tests: `package.json`, `scripts/{demo,test-database}.mjs`, `tests/browser/{responsive,presentation}.spec.ts`.
+- Docs: `README.md`, `docs/{progress,testing,system-framework,demo-presentation-guide,api,access-control-matrix,security-controls,threat-model}.md`.
+
+Limits: delivery providers, live gateways/refunds, player receipt submission, camera capture, public review submission/display and anonymous support remain unimplemented. Game selectors search the existing sixty-game public discovery window, not all history. Physical devices were not tested. Normal online MFA remains necessary. Existing pg adapter warning and free hosting/database-expiration limits remain. Deployment outcome will be recorded only after verification.
 
 ## Admin MFA setup and actionable booking queue - 2026-10-17
 

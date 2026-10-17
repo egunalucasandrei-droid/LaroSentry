@@ -361,6 +361,28 @@ export function RoleOverview({ mode }: { mode: 'owner' | 'staff' }) {
               </div>
             ))}
           </div>
+          <nav className="button-row" aria-label="Daily workspace actions">
+            {(mode === 'owner' || r.data.memberships.some((m) => m.permissions.includes('BOOKINGS'))) && (
+              <>
+                <Link className="btn" to={`/${mode}/bookings`}>
+                  Review booking requests
+                </Link>
+                <Link className="btn secondary" to={`/${mode}/calendar`}>
+                  Open today's schedule
+                </Link>
+              </>
+            )}
+            {(mode === 'owner' || r.data.memberships.some((m) => m.permissions.includes('ATTENDANCE'))) && (
+              <Link className="btn secondary" to={`/${mode}/check-in`}>
+                Check in a player
+              </Link>
+            )}
+            {(mode === 'owner' || r.data.memberships.some((m) => m.permissions.includes('PAYMENTS'))) && (
+              <Link className="btn secondary" to={`/${mode}/payments`}>
+                Review payment records
+              </Link>
+            )}
+          </nav>
           <p>
             Counts come from assigned facilities and granted permissions. Today uses Philippine time. Pending
             requests do not reserve a slot.

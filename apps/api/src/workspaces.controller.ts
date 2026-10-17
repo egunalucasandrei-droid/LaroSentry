@@ -81,6 +81,38 @@ export class WorkspacesController {
       ],
     };
   }
+  @Get('player/overview') async playerOverview(@Req() req: AuthRequest) {
+    const user = account(req);
+    const own = { userId: user.id, demoArchivedAt: null };
+    const now = new Date();
+    const [pending, upcoming, saved, unread, recent, notifications] = await Promise.all([
+      db.booking.count({ where: { ...own, status: 'PENDING', expiresAt: { gt: now } } }),
+      db.booking.count({ where: { ...own, status: 'CONFIRMED', endsAt: { gt: now } } }),
+      db.savedFacility.count({ where: { userId: user.id, facility: { status: 'PUBLISHED' } } }),
+      db.notification.count({ where: { userId: user.id, readAt: null } }),
+      db.booking.findMany({
+        where: own,
+        select: {
+          id: true,
+          reference: true,
+          status: true,
+          startsAt: true,
+          endsAt: true,
+          totalCentavos: true,
+          court: { select: { name: true, facility: { select: { name: true } } } },
+        },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        take: 5,
+      }),
+      db.notification.findMany({
+        where: { userId: user.id },
+        select: { id: true, title: true, href: true, readAt: true, createdAt: true },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        take: 4,
+      }),
+    ]);
+    return { pending, upcoming, saved, unread, recent, notifications, checkedAt: now };
+  }
   @Get('workspaces/:mode/:section') async records(
     @Req() req: AuthRequest,
     @Param('mode') mode: string,

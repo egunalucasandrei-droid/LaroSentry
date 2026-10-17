@@ -1,4 +1,6 @@
+import { useId } from 'react';
 export function CourtArt({ sport = 'Basketball', hero = false }: { sport?: string; hero?: boolean }) {
+  const patternId = useId();
   const tennis = ['Tennis', 'Badminton', 'Pickleball'].includes(sport);
   return (
     <svg
@@ -8,7 +10,7 @@ export function CourtArt({ sport = 'Basketball', hero = false }: { sport?: strin
       aria-label={`${sport} court illustration, not a facility photograph`}
     >
       <defs>
-        <pattern id={`grain-${hero}-${sport}`} width="20" height="20" patternUnits="userSpaceOnUse">
+        <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse">
           <circle cx="1" cy="1" r=".6" fill="#fff" opacity=".1" />
         </pattern>
       </defs>
@@ -20,11 +22,21 @@ export function CourtArt({ sport = 'Basketball', hero = false }: { sport?: strin
         <rect x="55" y="57" width="454" height="293" fill={tennis ? '#396b5e' : '#d69b76'} />
         <g fill="none" stroke="#fff3d7" strokeWidth="3" opacity=".87">
           <path d="M55 57H509V350H55Z M282 57V350" />
-          <circle cx="282" cy="203.5" r="40" />
+          {!tennis && sport !== 'Volleyball' && <circle cx="282" cy="203.5" r="40" />}
           {tennis ? (
             <>
               <path d="M55 95H509M55 312H509M170 95V312M394 95V312M170 204H394" />
               <path d="M282 45V365" strokeWidth="6" />
+            </>
+          ) : sport === 'Volleyball' ? (
+            <>
+              <path d="M207 57V350M357 57V350" />
+              <path d="M282 45V365" strokeWidth="6" />
+            </>
+          ) : sport === 'Futsal' ? (
+            <>
+              <path d="M55 118H125V290H55M509 118H439V290H509" />
+              <path d="M55 163H38V245H55M509 163H526V245H509" />
             </>
           ) : (
             <>
@@ -39,7 +51,7 @@ export function CourtArt({ sport = 'Basketball', hero = false }: { sport?: strin
         <path d="M0 386H560" stroke="#203b38" strokeWidth="13" />
         <path d="M12 401H553" stroke="#8a9f88" strokeWidth="5" />
       </g>
-      <rect width="680" height="450" fill={`url(#grain-${hero}-${sport})`} />
+      <rect width="680" height="450" fill={`url(#${patternId})`} />
       <g fill="#9cab7b">
         <circle cx="30" cy="36" r="65" />
         <circle cx="658" cy="421" r="70" />

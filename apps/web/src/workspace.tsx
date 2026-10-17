@@ -22,7 +22,7 @@ import { Community, GameOrganizer } from './community';
 import Admin from './admin';
 import { Applications, Reports } from './submissions';
 import CourtCalendar from './court-calendar';
-import { Recommendations } from './onboarding';
+import PlayerHome from './player-home';
 import {
   useWorkspaces,
   WorkspaceSwitcher,
@@ -161,6 +161,7 @@ export default function Workspace() {
             ['/admin/settings', 'Settings', Settings],
           ] as const)
         : ([
+            ['/app', 'Overview', LayoutDashboard],
             ['/facilities', 'Find courts', CalendarDays],
             ['/app/bookings', 'My bookings', CalendarDays],
             ['/app/saved', 'Saved places', Heart],
@@ -274,7 +275,7 @@ export default function Workspace() {
         ) : pathname.startsWith('/app/settings') ? (
           <SettingsPanel />
         ) : pathname === '/app' ? (
-          <Recommendations />
+          <PlayerHome />
         ) : pathname === '/app/notifications' ? (
           <Notifications />
         ) : pathname === '/app/saved' ? (
@@ -450,6 +451,26 @@ function BookingDetail({ booking: b, refresh }: { booking: Booking; refresh: () 
               : 'UNPAID · Pay at facility after confirmation'}
           </dd>
         </dl>
+        <section className="notice" aria-label="Booking and payment guidance">
+          <strong>
+            {b.status === 'PENDING'
+              ? 'Next: wait for facility approval'
+              : b.status === 'CONFIRMED'
+                ? 'Next: arrange payment and check in'
+                : 'This booking is no longer awaiting approval'}
+          </strong>
+          <p>
+            Booking status and payment status are separate. Arrange payment directly with the facility after
+            confirmation. Authorized staff record external payment details; this prototype does not charge a
+            card or transfer money.
+          </p>
+          {b.status === 'CONFIRMED' && (
+            <p>
+              Keep your booking reference ready. Generate a check-in code below when you are ready to present
+              it to staff.
+            </p>
+          )}
+        </section>
         <h3>Your cancellation terms</h3>
         <p>{b.policySnapshot}</p>
         {['PENDING', 'CONFIRMED'].includes(b.status) && new Date(b.startsAt) > new Date() && (

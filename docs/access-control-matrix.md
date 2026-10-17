@@ -74,3 +74,9 @@ Uploads/downloads, exports and staff-invitation management remain disabled/unimp
 # Admin pending-booking queue
 
 `/admin/booking-requests` requires an authenticated ADMIN with verified MFA. Its operational list and decisions additionally require the existing facility membership and BOOKINGS permission (OWNER assignments include this permission). Other roles are denied the admin route; an admin without facility assignment cannot approve that facility's bookings. Global booking investigation remains read-only under `/admin/bookings`. Decisions use the existing audited, conflict-checked API with a recorded reason; the admin queue requires explicit confirmation.
+
+## Presentation read models (2026-10-17)
+
+`GET /player/overview`: authenticated account, session-derived user ID only, bounded own booking/notification fields. No ability to select another account. `GET /report-targets`: authenticated account, published facilities or existing visible public-game set only, bounded search/pagination. Report creation checks visibility again; selector membership never grants authorization. Existing restrictions and account prerequisites remain.
+
+Admin overview's added totals/activity use the existing ADMIN + MFA guard. Owner/staff quick links are permission-aware but existing API membership/permission checks remain the enforcement boundary. Presentation fixture generation refuses production/Render/public pilot, requires a recognized local demo database and uses the four existing named fixture accounts; it grants no new global role.

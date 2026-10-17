@@ -41,3 +41,44 @@ Prisma's PostgreSQL adapter emits a pg concurrent-query deprecation warning duri
 Eight additional integration tests cover the complete admin namespace, visitors and PLAYER/FACILITY_OWNER/FACILITY_STAFF with actual enrolled MFA, an ADMIN without verified MFA, direct list/detail/mutation/file/export requests, successful admin access, public registration role-injection rejection, exact-account local grant/revoke and last-admin protection, application clarification/approval/publication and ownership audit, own-record boundaries, report decisions/reopening/history, reason/confirmation/CSRF validation, restriction/session revocation/login denial/restoration, minimized user projections, rule-derived deduplicated alerts and evidence, acknowledgement/resolution, audit pagination/read-only grants and measured health. Concurrent cross-restriction leaves exactly one usable admin and records the denied mutation.
 
 The isolated admin browser test verifies login/MFA before access; recovery-code visibility; all three non-admin UI/API denials; applicant submission and clarification; admin approval and public facility detail; rejection; report submission, safe text rendering and response; account restriction/restoration; real maintenance-worker alert generation, acknowledgement and resolution; audit search/event detail; health; security/acceptable-use page; and mobile overview overflow/serious-critical axe checks. It uses only local test services and fixture identities. Run separately with `pnpm test:admin:e2e`.
+
+## Presentation refresh verification - 2026-10-17
+
+Current-task runs (not historical totals):
+
+| Check | Result |
+| --- | --- |
+| `typecheck`, `lint`, `build` | Passed after correcting a Date/string formatting mismatch caught by TypeScript |
+| `test` | 11 unit tests passed |
+| `test:integration` | 57 PostgreSQL integration tests passed (146.8s), including own-account overview, resource selector visibility and forged-target denial |
+| `test:demo-mode` | 14 API cases passed: 7 ON and 7 OFF |
+| `test:responsive:e2e` | 9 browser cases passed (1.6m): three presentation workflows plus six responsive/role/calendar cases; fixture preparation runs twice to verify idempotence |
+| `test:admin:e2e` | 6 passed (56.4s): non-admin direct denials, real MFA, booking queue, review decisions, restrictions, alerts/audit/health, staff payments/check-in |
+| `test:scheduler:e2e` | 2 passed (18.8s): real calendar booking/approval/reschedule/closures/cancellation |
+| `test:onboarding:e2e` | 2 passed (30.0s): signup/contact/preferences and private evidence/clarification/approval |
+| Discovery + information browser files | 6 passed (32.0s) against existing local demo; axe serious/critical checks included |
+| Existing local four-account smoke | All four logins and distinct default workspaces passed; credentials and MFA state preserved |
+| Production fixture refusal | `NODE_ENV=production demo:scenarios` rejected before mutation |
+
+Total local browser cases in the suites above: **25**, plus four explicit existing-account login checks. The responsive run covers public/calendar widths 320/360/375/390/412/430/768/820/1024/1280/1440/1920 and role pages at 320/360/390/430/768/1440. ADMIN route coverage now includes booking requests. Screenshots inspected: mobile homepage, desktop player dashboard and admin overview; role/slot evidence retained privately under `.local/presentation-evidence`.
+
+An initial browser run found ambiguous report labels and a same-page mobile-navigation test race. Added an explicit accessible select name, and waited for the first navigation to settle before testing the next click; meaningful assertions remain. The final run passed all nine. No physical mobile-device, external-provider, live gateway or camera-scanner verification is claimed. Existing pg concurrent-query deprecation warnings remain.
+
+Reproduce from PowerShell:
+
+```powershell
+.\pnpm.cmd test
+.\pnpm.cmd test:integration
+.\pnpm.cmd test:demo-mode
+.\pnpm.cmd test:responsive:e2e
+.\pnpm.cmd test:admin:e2e
+.\pnpm.cmd test:scheduler:e2e
+.\pnpm.cmd test:onboarding:e2e
+.\pnpm.cmd typecheck
+.\pnpm.cmd lint
+.\pnpm.cmd build
+$env:BROWSER_BASE_URL='http://127.0.0.1:5176'
+.\pnpm.cmd exec playwright test tests/browser/discovery.spec.ts tests/browser/information.spec.ts
+```
+
+Database/browser workflow runners use isolated local databases. Discovery/information require the local demo running. Do not run general mutation suites against Render. Opt-in `responsive-live.spec.ts` is read-only except login/logout and is the appropriate deployed-pilot smoke check.

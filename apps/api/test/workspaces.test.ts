@@ -437,3 +437,49 @@ test('application approval grants facility ownership to staff while preserving t
   assert.equal(await db.membership.count({ where: { userId: staff.id, role: 'OWNER' } }), 1);
   assert.equal((await staff.agent.get('/api/workspaces')).status, 401);
 });
+
+test('player overview is database-backed, minimal and limited to the signed-in account', async () => {
+  const response = await player.agent.get('/api/player/overview');
+  assert.equal(response.status, 200);
+  assert.equal(
+    response.body.upcoming,
+    await db.booking.count({
+      where: { userId: player.id, demoArchivedAt: null, status: 'CONFIRMED', endsAt: { gt: new Date() } },
+    }),
+  );
+  assert.ok(response.body.recent.some((b: { id: string }) => b.id === bookingId));
+  assert.ok(!response.body.recent.some((b: { id: string }) => b.id === ownBooking));
+  const serialized = JSON.stringify(response.body);
+  assert.ok(!/passwordHash|mfaSecret|tokenHash|phoneHash/.test(serialized));
+  assert.equal((await request(app.getHttpServer()).get('/api/player/overview')).status, 401);
+});
+
+test('report choices are paginated, published-only and reject forged or inaccessible resources', async () => {
+  const facility = await db.facility.findUniqueOrThrow({ where: { id: facilityId } });
+  const publicChoice = await player.agent.get(
+    '/api/report-targets?type=FACILITY&q=' + encodeURIComponent(facility.name),
+  );
+  assert.equal(publicChoice.status, 200);
+  assert.equal(publicChoice.body.pageSize, 20);
+  assert.ok(publicChoice.body.items.some((item: { id: string }) => item.id === facilityId));
+  await db.facility.update({ where: { id: otherId }, data: { status: 'UNPUBLISHED' } });
+  try {
+    const response = await player.agent.get('/api/report-targets?type=FACILITY&q=Workspace');
+    assert.ok(!response.body.items.some((item: { id: string }) => item.id === otherId));
+    const forged = await post(player, '/reports', {
+      targetType: 'FACILITY',
+      targetId: otherId,
+      category: 'Facility concern',
+      details: 'A fictional inaccessible target must not bypass server authorization.',
+    });
+    assert.equal(forged.status, 404);
+  } finally {
+    await db.facility.update({ where: { id: otherId }, data: { status: 'PUBLISHED' } });
+  }
+  const games = await player.agent.get('/api/report-targets?type=GAME');
+  assert.equal(games.status, 200);
+  assert.ok(!games.body.items.some((item: { id: string }) => item.id === ownBooking));
+  assert.equal((await player.agent.get('/api/report-targets?type=USER')).status, 400);
+  assert.equal((await player.agent.get('/api/report-targets?type=FACILITY&page=0')).status, 400);
+  assert.equal((await request(app.getHttpServer()).get('/api/report-targets?type=FACILITY')).status, 401);
+});

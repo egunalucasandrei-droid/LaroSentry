@@ -91,3 +91,13 @@ Every `/admin` API path requires login, ADMIN and verified MFA, including nonexi
 POST `/facility-applications` accepts facility name/area/address/description, numeric coordinates and daily opening/closing hours, cancellationPolicy, courtName, sport, hourlyRate in integer centavos, capacity and confirmed=true. Three per account per day; new facilities remain PENDING. GET `/facility-applications?page=1` lists only the applicant's records and latest reviewer response. POST `/facility-applications/:id/reply` accepts message (10–2,000 characters) only for that applicant's CLARIFICATION state, returning it to PENDING.
 
 POST `/reports` accepts targetType=SECURITY|GENERAL|FACILITY|GAME, category (Security concern, Privacy concern, Conduct or abuse, Facility concern, Other), details (20–3,000 characters), and targetId only for a published facility or an accessible game. Ten per account per day. GET `/reports?page=1` lists only the reporter's records and review responses. No anonymous report intake, attachments or personal contact directory is exposed.
+
+## Client-presentation endpoints (2026-10-17)
+
+| Endpoint | Authorization and response |
+| --- | --- |
+| `GET /player/overview` | Account required; counts and bounded recent bookings/notifications only for the session's user. No user selector or private auth fields. |
+| `GET /report-targets?type=FACILITY&q=&page=1` | Account required; published venues only; validated search/page, twenty minimal id/label choices per page. |
+| `GET /report-targets?type=GAME&q=&page=1` | Account required; existing public-game visibility/blocking rules; twenty choices per page within the existing sixty-game discovery window. |
+
+Existing report POST target authorization remains mandatory regardless of what the selector returned. Admin overview adds real database totals and five recent ADMIN-prefixed audit actions, while retaining the same ADMIN/MFA guards. No new export or file capability is introduced.

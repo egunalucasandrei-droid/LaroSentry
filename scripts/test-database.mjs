@@ -76,6 +76,10 @@ if (demoVerification || responsiveBrowser) {
   });
   run(['--filter', '@larosentry/api', 'db:seed']);
   run(['--filter', '@larosentry/api', 'exec', 'tsx', 'src/demo-seed.ts']);
+  if (responsiveBrowser) {
+    run(['--filter', '@larosentry/api', 'exec', 'tsx', 'src/presentation-seed.ts']);
+    run(['--filter', '@larosentry/api', 'exec', 'tsx', 'src/presentation-seed.ts']);
+  }
   for (const mode of responsiveBrowser ? [] : ['true', 'false']) {
     childEnv.DEMO_MODE = mode;
     console.log(`Testing DEMO_MODE=${mode} in an isolated local database.`);
@@ -170,13 +174,13 @@ async function browserTests() {
         'exec',
         'playwright',
         'test',
-        responsiveBrowser
-          ? 'tests/browser/responsive.spec.ts'
+        ...(responsiveBrowser
+          ? ['tests/browser/responsive.spec.ts', 'tests/browser/presentation.spec.ts']
           : schedulerBrowser
-            ? 'tests/browser/scheduler.spec.ts'
+            ? ['tests/browser/scheduler.spec.ts']
             : onboardingBrowser
-              ? 'tests/browser/onboarding.spec.ts'
-              : 'tests/browser/admin.spec.ts',
+              ? ['tests/browser/onboarding.spec.ts']
+              : ['tests/browser/admin.spec.ts']),
       ],
       { stdio: 'inherit', env: childEnv, windowsHide: true },
     );

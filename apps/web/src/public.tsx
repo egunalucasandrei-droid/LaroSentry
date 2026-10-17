@@ -103,6 +103,10 @@ export function FacilityCard({
           <Link to={`/facilities/${facility.slug}`}>{facility.name}</Link>
         </h3>
         <p className="card-amenities">{facility.amenities.slice(0, 3).join(' · ')}</p>
+        <p className="small muted">
+          {facility.courts.length} listed {facility.courts.length === 1 ? 'court' : 'courts'} ·{' '}
+          {[...new Set(facility.courts.map((c) => c.sport))].join(' · ')}
+        </p>
         <div className="card-bottom">
           <span>
             <strong>{formatMoney(Math.min(...facility.courts.map((c) => c.hourlyRate)))}</strong>
@@ -203,12 +207,12 @@ export function Home() {
               </svg>
             </h1>
             <p>
-              Great games need a place to happen. Discover courts around Metro Manila and make room for your
-              next one.
+              Find a sports facility, choose a time and send a booking request. Owners manage reservations;
+              staff keep game day moving. All in one place.
             </p>
             <div className="hero-reassurance">
               <ShieldCheck size={19} />
-              <span>Clear prices. Real availability. Your call.</span>
+              <span>Clear prices. Live schedule checks. Facility approval before you play.</span>
             </div>
           </motion.div>
           <div className="hero-visual">
@@ -242,6 +246,26 @@ export function Home() {
             </span>
           </div>
         </div>
+      </section>
+      <section className="container presentation-paths" aria-label="Ways to use LaroSentry">
+        <Link className="panel" to="/facilities">
+          <CalendarDays aria-hidden="true" />
+          <h2>Find your next court</h2>
+          <p>Compare facilities, check times and track your booking request.</p>
+          <span className="text-link">Explore as a player →</span>
+        </Link>
+        <Link className="panel" to="/list-your-facility">
+          <ShieldCheck aria-hidden="true" />
+          <h2>Run your facility</h2>
+          <p>Review requests, manage your schedule and coordinate authorized staff.</p>
+          <span className="text-link">See facility hosting →</span>
+        </Link>
+        <Link className="panel" to="/how-it-works">
+          <Users aria-hidden="true" />
+          <h2>Know what happens next</h2>
+          <p>Request, wait for approval, arrange payment and check in at the facility.</p>
+          <span className="text-link">How booking works →</span>
+        </Link>
       </section>
       <section className="container section sports-section">
         <div className="section-title">

@@ -119,9 +119,16 @@ function Overview() {
   const result = useQuery({
     queryKey: ['admin', 'overview'],
     queryFn: () =>
-      api<{ pendingApplications: number; openReports: number; unresolvedAlerts: number; checkedAt: string }>(
-        '/admin/overview',
-      ),
+      api<{
+        pendingApplications: number;
+        openReports: number;
+        unresolvedAlerts: number;
+        publishedFacilities: number;
+        registeredUsers: number;
+        paymentRecords: number;
+        recentActions: { id: string; action: string; outcome: string; createdAt: string }[];
+        checkedAt: string;
+      }>('/admin/overview'),
     refetchInterval: 30000,
   });
   return (
@@ -142,6 +149,25 @@ function Overview() {
         <ErrorState error={result.error} retry={() => void result.refetch()} />
       ) : (
         <>
+          <div className="stats-grid">
+            {(
+              [
+                ['Published facilities', result.data.publishedFacilities, '/admin/facilities'],
+                ['Registered accounts', result.data.registeredUsers, '/admin/users'],
+                ['External payment records', result.data.paymentRecords, '/admin/payments'],
+              ] as const
+            ).map(([label, value, href]) => (
+              <Link className="panel" key={href} to={href}>
+                <span>{label}</span>
+                <strong>{value}</strong>
+              </Link>
+            ))}
+          </div>
+          <h2>Review queue</h2>
+          <p className="muted">
+            Applications, user concerns and alerts awaiting a human decision. Review evidence before taking
+            action.
+          </p>
           <div className="stats-grid">
             {[
               [
@@ -166,6 +192,28 @@ function Overview() {
             ))}
           </div>
           <p className="small muted">Checked {formatTime(result.data.checkedAt)}</p>
+          <section className="panel">
+            <h2>Recent administrative activity</h2>
+            {result.data.recentActions.length ? (
+              result.data.recentActions.map((action) => (
+                <p key={action.id}>
+                  <Link to={`/admin/audit/${action.id}`}>{action.action.replaceAll('_', ' ')}</Link> ·{' '}
+                  {action.outcome} · {formatTime(action.createdAt)}
+                </p>
+              ))
+            ) : (
+              <p>No administrative activity recorded yet.</p>
+            )}
+            <Link to="/admin/audit">Search full audit history →</Link>
+          </section>
+          <div className="button-row">
+            <Link className="btn secondary" to="/admin/payments">
+              Inspect external payments
+            </Link>
+            <Link className="btn secondary" to="/admin/health">
+              Check operational status
+            </Link>
+          </div>
         </>
       )}
       <p className="notice">

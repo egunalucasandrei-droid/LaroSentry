@@ -3168,3 +3168,66 @@ dialog {
     font-size: 0.85rem;
   }
 }
+.presentation-paths {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  padding-top: 36px;
+}
+.presentation-paths .panel {
+  margin: 0;
+  display: block;
+  border-top: 3px solid var(--green);
+}
+.presentation-paths h2 {
+  font-size: 1.2rem;
+  margin: 14px 0 8px;
+}
+.presentation-paths p {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.presentation-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: 24px;
+  margin-top: 28px;
+}
+.presentation-columns > * {
+  min-width: 0;
+}
+.presentation-record {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.presentation-record h3 {
+  margin: 12px 0 6px;
+}
+.presentation-record p {
+  margin: 8px 0;
+}
+@media (max-width: 850px) {
+  .presentation-paths,
+  .presentation-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.nolta-booking-steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  padding: 0;
+  margin: 18px 0;
+  list-style: none;
+}
+.nolta-booking-steps li {
+  padding: 10px;
+  border-radius: 8px;
+  background: #e7e8df;
+  font-size: 14px;
+}
+@media (max-width: 767px) {
+  .nolta-booking-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

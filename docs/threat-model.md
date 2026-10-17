@@ -42,3 +42,11 @@ Community threats include forwarded private links, accidental publication, leake
 - Malicious report/clarification text: server length/type validation, parameterized queries and React text rendering. Do not copy submitted markup into trusted HTML. No attachments are accepted.
 
 The local operator holding database credentials remains trusted and can grant ADMIN using the documented exact-account command. Protect the workspace and OS account. Database owners can still alter append-only data. Backups, production monitoring, incident response and independent security assessment remain separate operational work.
+
+## Presentation-specific misuse cases (2026-10-17)
+
+- Forged/stale report resource: selector only lists published/visible resources and report POST independently rechecks visibility. API integration tests deny an unpublished facility and anonymous requests.
+- Another player's dashboard data: no caller-supplied user ID; session-derived filtering and a negative fixture assertion prevent cross-account booking disclosure.
+- Rehearsal overwrites existing bookings or runs online: dedicated fictional court, business-rule quote, transaction/advisory lock, daily idempotent marker, and explicit production/Render/public-pilot refusal. No destructive reset or remote seed.
+- Synthetic alerts mistaken for wrongdoing: fixture reasons explicitly identify an exercise; acknowledgement/resolution remains human review and no automatic punishment is added.
+- False commercial claims: original illustrations, external payment records, unavailable delivery providers and absent camera/gateway/review integrations are disclosed in the presenter guide.

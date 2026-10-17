@@ -1,4 +1,4 @@
-import {
+﻿import {
   Body,
   ConflictException,
   Controller,
@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { z } from 'zod';
+import { formatTime } from '@larosentry/contracts';
 import { submitFacility } from './facility-verification.controller.js';
 
 import { db } from './db.js';
@@ -21,6 +22,62 @@ const pagingSchema = z.object({ page: z.coerce.number().int().min(1).max(10000).
 @ApiTags('Applications and reporting')
 @Controller()
 export class SubmissionsController {
+  @Get('report-targets') async targets(@Req() req: AuthRequest, @Query() query: unknown) {
+    account(req);
+    const { type, q, page } = parse(
+      z.object({
+        type: z.enum(['FACILITY', 'GAME']),
+        q: z.string().trim().max(100).default(''),
+        page: z.coerce.number().int().min(1).max(10000).default(1),
+      }),
+      query,
+    );
+    if (type === 'FACILITY') {
+      const where = {
+        status: 'PUBLISHED',
+        ...(q
+          ? {
+              OR: [
+                { name: { contains: q, mode: 'insensitive' as const } },
+                { area: { contains: q, mode: 'insensitive' as const } },
+              ],
+            }
+          : {}),
+      };
+      const [rows, total] = await Promise.all([
+        db.facility.findMany({
+          where,
+          select: { id: true, name: true, area: true },
+          orderBy: [{ name: 'asc' }, { id: 'asc' }],
+          skip: (page - 1) * 20,
+          take: 20,
+        }),
+        db.facility.count({ where }),
+      ]);
+      return {
+        items: rows.map((f) => ({ id: f.id, label: `${f.name} · ${f.area}` })),
+        total,
+        page,
+        pageSize: 20,
+      };
+    }
+    // Reuse the public game's existing publication, blocking and contact checks.
+    const games = await new CommunityController().list(req);
+    const rows = games.filter((g) =>
+      `${g.facility} ${g.sport} ${g.organizer}`.toLowerCase().includes(q.toLowerCase()),
+    );
+    return {
+      items: rows
+        .slice((page - 1) * 20, page * 20)
+        .map((g) => ({
+          id: g.id,
+          label: `${g.sport} · ${g.facility} · ${formatTime(g.startsAt.toISOString())}`,
+        })),
+      total: rows.length,
+      page,
+      pageSize: 20,
+    };
+  }
   @Post('facility-applications') async apply(@Req() req: AuthRequest, @Body() body: unknown) {
     const { draftId } = parse(z.object({ draftId: z.uuid() }).strict(), body);
     return submitFacility(req, draftId);

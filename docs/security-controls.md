@@ -65,3 +65,9 @@ See [publication review](publication-review.md) for launch blockers and isolated
 MFA enrollment displays an in-browser QR code and manual setup key with three explicit steps. QR generation uses the existing local library; no third-party QR service receives the secret. Restarting unfinished setup returns to password confirmation; submitting it generates a fresh pending key. This does not reset enabled MFA or bypass verification. Save recovery codes after successful enrollment. Shared setup keys should be replaced before enrollment completes.
 
 The admin booking-request queue reuses facility-scoped operational APIs. ADMIN alone grants no new facility decision authority. The optional `status=PENDING` list filter is server-validated; it filters before the existing 100-row limit. Existing MFA, CSRF, membership, price/policy, allocation/conflict and audit checks remain in force.
+
+## Presentation hardening verified 2026-10-17
+
+Player overview uses only the authenticated account's ID and exposes bounded booking/notification fields. Report target search uses validated bounded query parameters and parameterized Prisma access; facilities must be published, games reuse public visibility/blocking, and POST revalidates stale or forged choices. UI strings use React's normal text encoding. No new credentials, auth secrets, exports or document endpoints are exposed. Existing MFA, CSRF, rate limits, sessions, restrictions, resource authorization and audit remain in force.
+
+Daily presentation fixtures require the recognized loopback demo database; explicit production/Render/public-pilot guards reject execution. Fixture transactions use an advisory lock and daily audit marker to avoid overwriting rehearsal decisions. Synthetic denied events produce review alerts only; they do not automatically restrict accounts. The guide prohibits sharing private QR/MFA credentials and identifies unavailable integrations.

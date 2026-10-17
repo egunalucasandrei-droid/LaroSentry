@@ -551,6 +551,14 @@ function SchedulePage({ manage }: { manage: boolean }) {
   return (
     <>
       <h1>{manage ? 'Schedule' : 'Book a Court'}</h1>
+      {!manage && (
+        <ol className="nolta-booking-steps" aria-label="Booking request steps">
+          <li>1. Choose court & time</li>
+          <li>2. Review price & policy</li>
+          <li>3. Send request</li>
+          <li>4. Wait for host approval</li>
+        </ol>
+      )}
       <p>
         Select a court, date and duration. Green slots can be selected; reserved and maintenance slots are
         unavailable.
@@ -565,6 +573,9 @@ function SchedulePage({ manage }: { manage: boolean }) {
       {selection && (
         <div className="nolta-summary">
           <h2>Selected session</h2>
+          <p>
+            <strong>{selection.court.facility.name}</strong>
+          </p>
           <p>
             {selection.court.name} · {formatTime(selection.slot.startsAt)} –{' '}
             {displayClock(selection.slot.endsAt)} · {selection.duration} minutes

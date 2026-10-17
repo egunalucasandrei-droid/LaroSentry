@@ -28,6 +28,17 @@ export function Reports() {
     [message, setMessage] = useState(''),
     [error, setError] = useState<Error | null>(null),
     [busy, setBusy] = useState(false);
+  const [targetSearch, setTargetSearch] = useState('');
+  const [targetPage, setTargetPage] = useState(1);
+  const [targetId, setTargetId] = useState('');
+  const targets = useQuery({
+    queryKey: ['report-targets', kind, targetSearch, targetPage],
+    queryFn: () =>
+      api<Page<{ id: string; label: string }>>(
+        `/report-targets?${new URLSearchParams({ type: kind, q: targetSearch, page: String(targetPage) })}`,
+      ),
+    enabled: ['FACILITY', 'GAME'].includes(kind),
+  });
   const list = useQuery({
     queryKey: ['my-reports', page],
     queryFn: () => api<Page<Report>>(`/reports?page=${page}`),
@@ -37,15 +48,18 @@ export function Reports() {
     const form = e.currentTarget,
       f = new FormData(form);
     setBusy(true);
+    setError(null);
+    setMessage('');
     try {
       const r = await post<{ message: string }>('/reports', {
         targetType: kind,
-        ...(['FACILITY', 'GAME'].includes(kind) ? { targetId: f.get('targetId') } : {}),
+        ...(['FACILITY', 'GAME'].includes(kind) ? { targetId } : {}),
         category: f.get('category'),
         details: f.get('details'),
       });
       setMessage(r.message);
       form.reset();
+      setTargetId('');
       await list.refetch();
     } catch (e) {
       setError(e as Error);
@@ -70,18 +84,81 @@ export function Reports() {
         <h2>Report a concern</h2>
         <label>
           Report about
-          <select aria-label="Report about" value={kind} onChange={(e) => setKind(e.target.value)}>
+          <select
+            aria-label="Report about"
+            value={kind}
+            onChange={(e) => {
+              setKind(e.target.value);
+              setTargetId('');
+              setTargetSearch('');
+              setTargetPage(1);
+            }}
+          >
             <option value="SECURITY">Security or privacy</option>
             <option value="GENERAL">General conduct or account concern</option>
             <option value="FACILITY">Published facility</option>
-            <option value="GAME">Game I can access</option>
+            <option value="GAME">Public game</option>
           </select>
         </label>
         {['FACILITY', 'GAME'].includes(kind) && (
-          <label>
-            Facility or game ID
-            <input name="targetId" required placeholder="UUID reference" />
-          </label>
+          <fieldset>
+            <legend>Choose the {kind === 'FACILITY' ? 'facility' : 'public game'}</legend>
+            <label>
+              Search reportable resources
+              <input
+                type="search"
+                value={targetSearch}
+                onChange={(e) => {
+                  setTargetSearch(e.target.value);
+                  setTargetPage(1);
+                  setTargetId('');
+                }}
+                maxLength={100}
+              />
+            </label>
+            {targets.isPending ? (
+              <Loading />
+            ) : targets.error ? (
+              <ErrorState error={targets.error} />
+            ) : (
+              <>
+                <label>
+                  {kind === 'FACILITY' ? 'Facility to report' : 'Game to report'}
+                  <select
+                    aria-label={kind === 'FACILITY' ? 'Facility to report' : 'Game to report'}
+                    required
+                    value={targetId}
+                    onChange={(e) => setTargetId(e.target.value)}
+                  >
+                    <option value="">Choose a resource</option>
+                    {targets.data?.items.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {!targets.data?.items.length && (
+                  <p>
+                    No matching resources. Try another search, or use General conduct to describe the concern.
+                  </p>
+                )}
+                {targets.data && (
+                  <Pagination
+                    data={targets.data}
+                    setPage={(p) => {
+                      setTargetPage(p);
+                      setTargetId('');
+                    }}
+                  />
+                )}
+              </>
+            )}
+            <p className="small muted">
+              Only published facilities and games visible to your account are offered. Access is checked again
+              when you submit.
+            </p>
+          </fieldset>
         )}
         <label>
           Category
@@ -106,7 +183,7 @@ export function Reports() {
         <p className="small muted">
           Up to ten reports per account per day. Reports are visible to authorized admins and your account.
         </p>
-        <button className="btn" disabled={busy}>
+        <button className="btn" disabled={busy || (['FACILITY', 'GAME'].includes(kind) && !targetId)}>
           Submit report
         </button>
       </form>

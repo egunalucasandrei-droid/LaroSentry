@@ -20,8 +20,10 @@ const demoPortOccupied = (port) =>
   });
 
 const command = process.argv[2];
-if (!['setup', 'start'].includes(command) || process.env.NODE_ENV === 'production')
-  throw new Error('Use demo:setup or demo:start locally. Production is refused.');
+if (command === 'scenarios' && (process.env.RENDER === 'true' || process.env.PUBLIC_PILOT === '1'))
+  throw new Error('Presentation scenarios are refused on Render/public pilot environments.');
+if (!['setup', 'start', 'scenarios'].includes(command) || process.env.NODE_ENV === 'production')
+  throw new Error('Use demo:setup, demo:start or demo:scenarios locally. Production is refused.');
 const config = Object.fromEntries(
   (readFileSync('.env', 'utf8') + '\n' + readFileSync('.env.migrations', 'utf8'))
     .split(/\r?\n/)
@@ -76,7 +78,9 @@ function run(args) {
   });
   if (result.status !== 0) throw new Error('Demo command failed; existing databases are preserved.');
 }
-if (command === 'setup') {
+if (command === 'scenarios') {
+  run(['--filter', '@larosentry/api', 'exec', 'tsx', 'src/presentation-seed.ts']);
+} else if (command === 'setup') {
   if ((await Promise.all([5176, 4011].map(demoPortOccupied))).some(Boolean)) {
     console.error(
       'Demo setup refused: a demo server is still running. To use existing accounts, open http://127.0.0.1:5176/login. To create a fresh demo, stop the serving terminal with Ctrl+C first. No database or password was changed.',
