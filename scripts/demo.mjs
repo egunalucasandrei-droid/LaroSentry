@@ -29,6 +29,8 @@ const config = Object.fromEntries(
     .map((x) => [x.slice(0, x.indexOf('=')), x.slice(x.indexOf('=') + 1)]),
 );
 if (config.NODE_ENV === 'production') throw new Error('Production configuration is refused.');
+const demoMode = process.env.DEMO_MODE ?? config.DEMO_MODE ?? 'false';
+if (!['true', 'false'].includes(demoMode)) throw new Error('DEMO_MODE must be true or false.');
 const runtime = new URL(config.DATABASE_URL),
   migration = new URL(config.MIGRATION_DATABASE_URL);
 for (const url of [runtime, migration]) {
@@ -58,7 +60,11 @@ const childEnv = {
   SMTP_HOST: '127.0.0.1',
   SMTP_PORT: '1025',
   LOCAL_DEMO_INSTANCE: name,
-  LOCAL_DEMO_QUICK_ACCESS: '1',
+  DEMO_MODE: demoMode,
+  LOCAL_DEMO_QUICK_ACCESS:
+    demoMode === 'true'
+      ? '0'
+      : (process.env.LOCAL_DEMO_QUICK_ACCESS ?? config.LOCAL_DEMO_QUICK_ACCESS ?? '0'),
   SMS_PROVIDER: 'local',
 };
 const pnpm = process.env.npm_execpath;
@@ -154,7 +160,11 @@ if (command === 'setup') {
       });
       const body = await response.json();
       return (
-        response.ok && body.status === 'ok' && body.database === 'connected' && body.demoInstance === name
+        response.ok &&
+        body.status === 'ok' &&
+        body.database === 'connected' &&
+        body.demoInstance === name &&
+        body.demoMode === (demoMode === 'true')
       );
     } catch {
       return false;
@@ -164,7 +174,7 @@ if (command === 'setup') {
   if (ports.some(Boolean)) {
     if (ports.every(Boolean) && (await Promise.all([5176, 4011].map(healthy))).every(Boolean)) {
       console.log(
-        'LaroSentry demo is already running. Open http://127.0.0.1:5176/login. No second server was started.',
+        `LaroSentry demo is already running with DEMO_MODE=${demoMode}. Open http://127.0.0.1:5176/login. No second server was started.`,
       );
       process.exit(0);
     }
@@ -240,7 +250,7 @@ if (command === 'setup') {
   }
   if (ready)
     console.log(
-      `LOCAL FICTIONAL DEMO READY: ${name}\nOpen http://127.0.0.1:5176/login\nKeep this terminal open. Repeating demo:start safely reuses this demo. Mail: http://127.0.0.1:8025.`,
+      `LOCAL FICTIONAL DEMO READY: ${name}\nDEMO_MODE=${demoMode}\nOpen http://127.0.0.1:5176/login\nKeep this terminal open. Repeating demo:start with the same mode safely reuses this demo. Mail: http://127.0.0.1:8025.`,
     );
   else if (!stopping) {
     console.error('The demo did not become ready. Check the service errors above and restart.');

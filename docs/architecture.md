@@ -1,5 +1,7 @@
 # Architecture
 
+See [How LaroSentry works](system-framework.md) for the current beginner-friendly architecture, role/booking/payment/application diagrams, real data relationships and implemented-versus-planned service boundaries. [Local demo mode](demo-mode.md) adds a server-configured fixture-only verification policy at the existing guard boundary; it does not replace authentication, authorization or the deployment stack.
+
 The website talks to one NestJS API through same-origin `/api` routing. Vite proxies requests to loopback port 4000. The API uses Prisma's PostgreSQL adapter to a shared PostgreSQL database. It has authentication, discovery, booking, community, submissions, administration and facility-operation controller boundaries. Shared admin access/decision and alert-rule helpers enforce critical policies; further module/service separation remains work as the pilot expands. The shared contracts package is convenience, not trust: every relevant API mutation parses its body on the server.
 
 ```mermaid

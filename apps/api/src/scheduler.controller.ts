@@ -20,7 +20,7 @@ import { account, administrator, parse, privileged, uuid, type AuthRequest } fro
 import { audit } from './audit.js';
 import { lockBooking, notifyBooking, quote } from './bookings.controller.js';
 import { courtSchedule } from './scheduling.js';
-import { demoAccessAllowed } from './demo-access.js';
+import { demoAccessAllowed, demoModeFor } from './demo-access.js';
 import { hash } from './crypto.js';
 
 const confirmation = z.object({ confirmed: z.literal(true), reason: z.string().trim().min(3).max(300) });
@@ -349,7 +349,7 @@ export class SchedulerController {
       let customerId = user.id;
       if (extra.manual && extra.customerEmail) {
         const customer = await tx.user.findUnique({ where: { email: extra.customerEmail.toLowerCase() } });
-        if (!customer?.verifiedAt || customer.suspendedAt)
+        if (!customer || (!customer.verifiedAt && !demoModeFor(customer)) || customer.suspendedAt)
           throw new BadRequestException('Use the exact email of an active verified account.');
         customerId = customer.id;
       }

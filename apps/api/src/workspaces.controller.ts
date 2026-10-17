@@ -16,7 +16,7 @@ import { db } from './db.js';
 import { account, administrator, parse, privileged, uuid, type AuthRequest } from './http.js';
 import { audit } from './audit.js';
 import { adminWriter, decision } from './admin-access.js';
-import { demoAccessAllowed } from './demo-access.js';
+import { demoAccessAllowed, demoModeFor } from './demo-access.js';
 
 const pageSchema = z.object({
   page: z.coerce.number().int().min(1).max(10000).default(1),
@@ -391,9 +391,9 @@ export class WorkspacesController {
       });
       if (owner?.role !== 'OWNER') throw new ForbiddenException('Facility owner access required.');
       const target = await tx.user.findUnique({ where: { email: data.email } });
-      if (!target || !target.verifiedAt || target.suspendedAt)
+      if (!target || (!target.verifiedAt && !demoModeFor(target)) || target.suspendedAt)
         throw new NotFoundException('An active verified account with that exact email is required.');
-      if (!data.remove && !target.phoneVerifiedAt && !demoAccessAllowed(target))
+      if (!data.remove && !target.phoneVerifiedAt && !demoAccessAllowed(target) && !demoModeFor(target))
         throw new ConflictException('The staff account must verify its mobile number before assignment.');
       const existing = await tx.membership.findUnique({
         where: { userId_facilityId: { userId: target.id, facilityId: id } },

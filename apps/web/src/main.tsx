@@ -24,7 +24,11 @@ const queryClient = new QueryClient({
   },
 });
 export function useUser() {
-  return useQuery({ queryKey: ['me'], queryFn: () => api<{ user: User | null }>('/auth/me'), retry: false });
+  return useQuery({
+    queryKey: ['me'],
+    queryFn: () => api<{ user: User | null; demoMode?: boolean }>('/auth/me'),
+    retry: false,
+  });
 }
 export function Loading() {
   return (
@@ -113,6 +117,12 @@ function Shell() {
           </>
         )}
       </div>
+      {data?.demoMode && (
+        <div className="notice" role="status" style={{ margin: 0, textAlign: 'center' }}>
+          DEMO MODE — Verification bypassed for named local demo accounts. Login, roles and facility
+          permissions remain enforced.
+        </div>
+      )}
       <header className="site-header">
         <div className="nav-wrap">
           <Brand />

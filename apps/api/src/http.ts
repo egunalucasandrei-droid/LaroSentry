@@ -6,7 +6,7 @@ import { db } from './db.js';
 import { hash } from './crypto.js';
 import { env } from './config.js';
 import { audit } from './audit.js';
-import { demoSessionVerified } from './demo-access.js';
+import { demoModeFor, demoSessionVerified } from './demo-access.js';
 export type AuthRequest = Request & { account?: User; session?: Session; correlationId: string };
 export function parse<T>(schema: z.ZodType<T>, body: unknown): T {
   const result = schema.safeParse(body);
@@ -22,7 +22,7 @@ export function sessionAccount(req: AuthRequest) {
 }
 export function account(req: AuthRequest) {
   const user = sessionAccount(req);
-  if (!user.verifiedAt || (user.contactRequired && !user.phoneVerifiedAt))
+  if (!demoModeFor(user) && (!user.verifiedAt || (user.contactRequired && !user.phoneVerifiedAt)))
     throw new ForbiddenException(
       'Complete email and mobile verification in Account verification before using this feature.',
     );
@@ -56,7 +56,7 @@ export async function administrator(req: AuthRequest) {
   const user = account(req);
   if (
     user.role !== 'ADMIN' ||
-    !user.verifiedAt ||
+    (!user.verifiedAt && !demoModeFor(user)) ||
     (!user.phoneVerifiedAt && !demoSessionVerified(req.session, user)) ||
     ((!user.mfaEnabled || !req.session?.mfaVerified) && !demoSessionVerified(req.session, user))
   ) {

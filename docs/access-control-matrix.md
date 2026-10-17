@@ -1,5 +1,7 @@
 # Access control
 
+Local DEMO_MODE extension (2026-10-17): only the four exact named local fixtures in a matching dedicated loopback demo database may bypass contact/onboarding/MFA and application-evidence prerequisites. Password sessions, restrictions, all roles/memberships/permissions, own-resource/file rules, review assignment/self-review prevention, independent approval, confirmation/reasons and last-admin protection remain. Default is OFF; production/Render/public configuration rejects ON. Actual verification/enrollment is not rewritten; APIs report a separate `verificationBypassed` flag. The operation matrix below remains authoritative for authorization. [Mode boundaries/tests](demo-mode.md) and [current beginner-friendly matrix/flows](system-framework.md#21-rolepermission-matrix).
+
 ## Onboarding and verification (2026-10-16)
 
 Authenticated restricted sessions may read only their own contact status, request/consume their own SMS challenge and manage contact onboarding. First verified contact enables purpose/preferences; new accounts require both contacts for normal account/business APIs. Both contacts are mandatory for new facility drafts/evidence/submission and staff invitation acceptance. Normal privileged owner/staff/ADMIN access now also requires verified mobile; the existing exact local demo preview remains limited to its fictional loopback environment. Legacy player access is preserved without inventing verified phones.

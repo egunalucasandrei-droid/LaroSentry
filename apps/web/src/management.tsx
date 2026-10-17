@@ -22,7 +22,7 @@ export default function Management() {
   const summary = useQuery({
     queryKey: ['management'],
     queryFn: () => api<Summary>('/management'),
-    enabled: allowed && !!me.data?.user?.mfaVerified,
+    enabled: allowed && !!(me.data?.user?.mfaVerified || me.data?.user?.verificationBypassed),
   });
   if (me.isPending) return <Loading />;
   if (me.error) return <ErrorState error={me.error} />;
@@ -37,7 +37,8 @@ export default function Management() {
         </Link>
       </section>
     );
-  if (!me.data.user.mfaVerified) return <Navigate to="/mfa?next=%2Fmanage" replace />;
+  if (!me.data.user.mfaVerified && !me.data.user.verificationBypassed)
+    return <Navigate to="/mfa?next=%2Fmanage" replace />;
   if (summary.isPending) return <Loading />;
   if (summary.error) return <ErrorState error={summary.error} retry={() => void summary.refetch()} />;
   const admin = summary.data.scope === 'ADMIN';

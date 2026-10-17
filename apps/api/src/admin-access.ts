@@ -2,7 +2,7 @@ import { ConflictException, ForbiddenException } from '@nestjs/common';
 import type { Tx } from './db.js';
 import type { AuthRequest } from './http.js';
 import { audit } from './audit.js';
-import { demoSessionVerified } from './demo-access.js';
+import { demoModeFor, demoSessionVerified } from './demo-access.js';
 
 export async function lockAdminAccess(tx: Tx) {
   await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended('larosentry-admin-access',0))::text`;
@@ -17,7 +17,7 @@ export async function adminWriter(tx: Tx, req: AuthRequest) {
     !session ||
     session.user.role !== 'ADMIN' ||
     session.user.suspendedAt ||
-    !session.user.verifiedAt ||
+    (!session.user.verifiedAt && !demoModeFor(session.user)) ||
     (!session.user.phoneVerifiedAt && !demoSessionVerified(session, session.user)) ||
     ((!session.user.mfaEnabled || !session.mfaVerified) && !demoSessionVerified(session, session.user)) ||
     session.expiresAt <= new Date() ||

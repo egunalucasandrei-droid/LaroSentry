@@ -20,6 +20,7 @@ const schema = z.object({
   MAIL_FROM: z.string().default('LaroSentry <hello@larosentry.test>'),
   EMAIL_PROVIDER: z.enum(['smtp', 'unavailable']).default('smtp'),
   PUBLIC_PILOT: z.enum(['0', '1']).default('0'),
+  DEMO_MODE: z.enum(['true', 'false']).default('false'),
 });
 export const env = schema.parse({
   ...process.env,
@@ -30,5 +31,6 @@ validateDeployment(env, {
   RENDER_EXTERNAL_URL: process.env.RENDER_EXTERNAL_URL,
   SMS_PROVIDER: process.env.SMS_PROVIDER,
   LOCAL_DEMO_QUICK_ACCESS: process.env.LOCAL_DEMO_QUICK_ACCESS,
+  LOCAL_DEMO_INSTANCE: process.env.LOCAL_DEMO_INSTANCE,
 });
 export const workspaceRoot = root;

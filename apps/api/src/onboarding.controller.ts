@@ -19,19 +19,20 @@ import { decrypt, encrypt, hash, privateHash, token } from './crypto.js';
 import { audit } from './audit.js';
 import { queueMail } from './outbox.js';
 import { env } from './config.js';
+import { demoModeFor } from './demo-access.js';
 import { smsAdapter } from './sms.js';
 
 export const contactComplete = (u: { verifiedAt: Date | null; phoneVerifiedAt: Date | null }) =>
   !!u.verifiedAt && !!u.phoneVerifiedAt;
 export function firstContact(req: AuthRequest) {
   const u = sessionAccount(req);
-  if (!u.verifiedAt && !u.phoneVerifiedAt)
+  if (!u.verifiedAt && !u.phoneVerifiedAt && !demoModeFor(u))
     throw new ForbiddenException('Verify either email or mobile first.');
   return u;
 }
 export function bothContacts(req: AuthRequest) {
   const u = sessionAccount(req);
-  if (!contactComplete(u))
+  if (!contactComplete(u) && !demoModeFor(u))
     throw new ForbiddenException(
       'Verify both email and mobile before submitting facility evidence or accepting staff access.',
     );
@@ -295,7 +296,7 @@ export class OnboardingController {
       );
     if (!(await argon2.verify(u.passwordHash, v.password)))
       throw new ForbiddenException('Confirm your current password.');
-    if (u.mfaEnabled && !req.session?.mfaVerified)
+    if (u.mfaEnabled && !req.session?.mfaVerified && !demoModeFor(u))
       throw new ForbiddenException('Verify your authenticator before changing contact information.');
     const phoneHash = privateHash(`phone:${v.phone}`),
       emailChanged = u.email !== v.email,

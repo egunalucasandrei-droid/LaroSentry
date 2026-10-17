@@ -19,6 +19,7 @@ import { phoneSchema, sports } from '@larosentry/contracts';
 import { db } from './db.js';
 import { administrator, parse, uuid, type AuthRequest } from './http.js';
 import { bothContacts } from './onboarding.controller.js';
+import { demoModeFor } from './demo-access.js';
 import { decrypt, encrypt } from './crypto.js';
 import { audit } from './audit.js';
 
@@ -85,7 +86,7 @@ export async function submitFacility(req: AuthRequest, id: string) {
   return db.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT id FROM "User" WHERE id=${u.id}::uuid FOR UPDATE`;
     const currentUser = await tx.user.findUniqueOrThrow({ where: { id: u.id } });
-    if (!currentUser.verifiedAt || !currentUser.phoneVerifiedAt)
+    if (!demoModeFor(currentUser) && (!currentUser.verifiedAt || !currentUser.phoneVerifiedAt))
       throw new ForbiddenException('Verify both contacts before submitting.');
     await tx.$queryRaw`SELECT id FROM "FacilityDraft" WHERE id=${id}::uuid FOR UPDATE`;
     const draft = await tx.facilityDraft.findFirst({ where: { id, userId: u.id } });
@@ -96,14 +97,16 @@ export async function submitFacility(req: AuthRequest, id: string) {
         where: { draftId: id, deletedAt: null, expiresAt: { gt: new Date() } },
       });
     if (
-      !draft.idType ||
-      !idTypes().includes(draft.idType) ||
-      docs.filter((d) => d.kind === 'IDENTITY').length !== 1
+      !demoModeFor(currentUser) &&
+      (!draft.idType ||
+        !idTypes().includes(draft.idType) ||
+        docs.filter((d) => d.kind === 'IDENTITY').length !== 1)
     )
       throw new BadRequestException('Submit one supported identity image.');
-    if (!docs.some((d) => d.kind === 'PHOTO'))
+    if (!demoModeFor(currentUser) && !docs.some((d) => d.kind === 'PHOTO'))
       throw new BadRequestException('Submit at least one facility photo.');
     if (
+      !demoModeFor(currentUser) &&
       !docs.some((d) => d.kind === 'SUPPORT') &&
       (draft.relationship !== 'OWNER' || (data.evidenceExplanation?.length ?? 0) < 20)
     )
@@ -184,6 +187,21 @@ export async function submitFacility(req: AuthRequest, id: string) {
           },
         });
     await tx.facilityDraft.update({ where: { id }, data: { stage: 'SUBMITTED' } });
+    if (demoModeFor(currentUser)) {
+      await tx.facilityApplication.update({
+        where: { id: application.id },
+        data: { identityState: 'DEMO_BYPASSED' },
+      });
+      await audit(
+        tx,
+        u.id,
+        'LOCAL_DEMO_APPLICATION_EVIDENCE_BYPASSED',
+        application.id,
+        'SUCCESS',
+        req.correlationId,
+        'Local fixture evidence requirements bypassed; application still requires independent admin approval.',
+      );
+    }
     await tx.user.update({
       where: { id: u.id },
       data: { onboardingCompletedAt: new Date(), purpose: 'HOST' },

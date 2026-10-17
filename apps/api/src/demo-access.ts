@@ -1,6 +1,18 @@
 import { env } from './config.js';
 
 const sessions = new Map<string, number>();
+export const localDemoEnabled = () => env.DEMO_MODE === 'true';
+// Exact existing fictional accounts only. Roles still come from the database.
+// Scoped application/invitation approval may legitimately change a fixture's role.
+export function demoModeFor(user: { email: string; role: string }) {
+  const roles: Record<string, string[]> = {
+    'admin@demo.example.test': ['ADMIN'],
+    'facility_owner@demo.example.test': ['FACILITY_OWNER'],
+    'facility_staff@demo.example.test': ['FACILITY_STAFF', 'FACILITY_OWNER'],
+    'player@demo.example.test': ['PLAYER', 'FACILITY_OWNER', 'FACILITY_STAFF'],
+  };
+  return localDemoEnabled() && !!roles[user.email]?.includes(user.role);
+}
 export function demoAccessAllowed(user: { email: string; role: string }) {
   const database = new URL(env.DATABASE_URL);
   const name = database.pathname.slice(1);
@@ -27,5 +39,8 @@ export function demoSessionVerified(
   session: { id: string } | undefined,
   user: { email: string; role: string },
 ) {
-  return !!session && demoAccessAllowed(user) && (sessions.get(session.id) ?? 0) > Date.now();
+  return (
+    !!session &&
+    (demoModeFor(user) || (demoAccessAllowed(user) && (sessions.get(session.id) ?? 0) > Date.now()))
+  );
 }

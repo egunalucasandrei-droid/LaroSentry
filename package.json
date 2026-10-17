@@ -24,6 +24,7 @@
     "format": "prettier --write apps packages scripts docs tests *.json *.yaml",
     "test": "vitest run",
     "test:integration": "node scripts/test-database.mjs",
+    "test:demo-mode": "node scripts/test-database.mjs demo-verification",
     "test:e2e": "playwright test",
     "test:admin:e2e": "node scripts/test-database.mjs browser-admin",
     "test:onboarding:e2e": "node scripts/test-database.mjs browser-onboarding",

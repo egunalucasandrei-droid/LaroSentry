@@ -44,7 +44,8 @@ export default function Workspace() {
       </section>
     );
   if (!me.data.user) return <Navigate to={`/login?next=${encodeURIComponent(pathname)}`} replace />;
-  if (me.data.user.needsOnboarding) return <Navigate to="/onboarding" replace />;
+  if (me.data.user.needsOnboarding && !me.data.user.verificationBypassed)
+    return <Navigate to="/onboarding" replace />;
   const operations = pathname.startsWith('/owner') || pathname.startsWith('/staff'),
     admin = pathname.startsWith('/admin');
   const staff = pathname.startsWith('/staff');
@@ -58,7 +59,8 @@ export default function Workspace() {
         </Link>
       </section>
     );
-  if (admin && !me.data.user.mfaVerified) return <Navigate to="/mfa?next=%2Fadmin" replace />;
+  if (admin && !me.data.user.mfaVerified && !me.data.user.verificationBypassed)
+    return <Navigate to="/mfa?next=%2Fadmin" replace />;
   if (access.isPending) return <Loading />;
   if (access.error) return <ErrorState error={access.error} />;
   if (operations && !(staff ? access.data.staff : access.data.owner))
@@ -210,7 +212,7 @@ export default function Workspace() {
       </aside>
       <div className="workspace-content">
         {operations || admin ? (
-          !me.data.user.mfaVerified ? (
+          !me.data.user.mfaVerified && !me.data.user.verificationBypassed ? (
             <MfaPanel />
           ) : admin ? (
             <Admin />

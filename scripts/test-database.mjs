@@ -4,6 +4,7 @@ import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { randomBytes } from 'node:crypto';
 const env = Object.fromEntries(
   (readFileSync('.env', 'utf8') + '\n' + readFileSync('.env.migrations', 'utf8'))
     .split(/\r?\n/)
@@ -12,7 +13,8 @@ const env = Object.fromEntries(
 );
 const schedulerBrowser = process.argv[2] === 'browser-scheduler';
 const onboardingBrowser = process.argv[2] === 'browser-onboarding';
-const name = `larosentry_${schedulerBrowser ? 'demo' : 'test'}_${Date.now()}`;
+const demoVerification = process.argv[2] === 'demo-verification';
+const name = `larosentry_${schedulerBrowser || demoVerification ? 'demo' : 'test'}_${Date.now()}`;
 const psql = resolve('.tools/pgsql/bin/psql.exe');
 const adminEnv = { ...process.env, PGPASSWORD: readFileSync('.local/pg-password', 'utf8').trim() };
 function sql(database, text) {
@@ -33,6 +35,7 @@ const childEnv = {
   ...process.env,
   ...env,
   NODE_ENV: 'test',
+  DEMO_MODE: 'false',
   SMS_PROVIDER: 'local',
   DATABASE_URL: runtime.toString(),
   MIGRATION_DATABASE_URL: migration.toString(),
@@ -49,7 +52,43 @@ function run(args) {
 }
 console.log(`Created separate PostgreSQL test database ${name}. Existing databases are untouched.`);
 run(['--filter', '@larosentry/api', 'db:migrate']);
-if (process.argv[2] !== 'browser-admin' && !schedulerBrowser && !onboardingBrowser) {
+if (demoVerification) {
+  const file = resolve(`.local/demo-verification-${name}.json`);
+  writeFileSync(
+    file,
+    JSON.stringify(
+      Object.fromEntries(
+        ['PLAYER', 'FACILITY_OWNER', 'FACILITY_STAFF', 'ADMIN'].map((role) => [
+          role,
+          randomBytes(24).toString('base64url'),
+        ]),
+      ),
+    ),
+    { mode: 0o600 },
+  );
+  Object.assign(childEnv, {
+    LOCAL_DEMO_INSTANCE: name,
+    LOCAL_DEMO_QUICK_ACCESS: '0',
+    DEMO_PASSWORD_FILE: file,
+    DEMO_VERIFICATION_TEST: '1',
+    APP_ORIGIN: 'http://127.0.0.1:5173',
+  });
+  run(['--filter', '@larosentry/api', 'db:seed']);
+  run(['--filter', '@larosentry/api', 'exec', 'tsx', 'src/demo-seed.ts']);
+  for (const mode of ['true', 'false']) {
+    childEnv.DEMO_MODE = mode;
+    console.log(`Testing DEMO_MODE=${mode} in an isolated local database.`);
+    run([
+      '--filter',
+      '@larosentry/api',
+      'exec',
+      'tsx',
+      '--test',
+      '--test-concurrency=1',
+      'test/demo-mode.test.ts',
+    ]);
+  }
+} else if (process.argv[2] !== 'browser-admin' && !schedulerBrowser && !onboardingBrowser) {
   run(['--filter', '@larosentry/api', 'test:integration']);
 } else {
   Object.assign(childEnv, {

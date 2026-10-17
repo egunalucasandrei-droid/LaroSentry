@@ -24,7 +24,13 @@ import { account, parse, type AuthRequest, uuid } from './http.js';
 import { env } from './config.js';
 import { queueMail } from './outbox.js';
 import { audit } from './audit.js';
-import { demoAccessAllowed, demoSessionVerified, grantDemoSession } from './demo-access.js';
+import {
+  demoAccessAllowed,
+  demoModeFor,
+  demoSessionVerified,
+  grantDemoSession,
+  localDemoEnabled,
+} from './demo-access.js';
 const options = {
   httpOnly: true,
   secure: env.NODE_ENV === 'production',
@@ -54,6 +60,7 @@ const publicUser = (
   role: user.role,
   mfaEnabled: user.mfaEnabled,
   mfaVerified,
+  verificationBypassed: demoModeFor(user),
   demoAccessAllowed: demoAccessAllowed(user),
   emailVerified: !!user.verifiedAt,
   phoneVerified: !!user.phoneVerifiedAt,
@@ -84,8 +91,13 @@ export class AuthController {
   @Get('me') me(@Req() req: AuthRequest) {
     return {
       user: req.account
-        ? publicUser(req.account, !!req.session?.mfaVerified || demoSessionVerified(req.session, req.account))
+        ? publicUser(
+            req.account,
+            !!req.session?.mfaVerified ||
+              (!demoModeFor(req.account) && demoSessionVerified(req.session, req.account)),
+          )
         : null,
+      demoMode: localDemoEnabled(),
     };
   }
 
@@ -212,10 +224,20 @@ export class AuthController {
       if (req.session) await tx.session.deleteMany({ where: { id: req.session.id } });
       const credentials = await createSession(tx, user.id);
       await audit(tx, user.id, 'LOGIN', undefined, 'SUCCESS', req.correlationId);
+      if (demoModeFor(user))
+        await audit(
+          tx,
+          user.id,
+          'LOCAL_DEMO_VERIFICATION_BYPASSED',
+          user.id,
+          'SUCCESS',
+          req.correlationId,
+          'Named local demo fixture: verification checks bypassed; password, session, role and resource checks retained.',
+        );
       return credentials;
     });
     setSession(res, credentials);
-    return { user: publicUser(user, false) };
+    return { user: publicUser(user, false), demoMode: localDemoEnabled() };
   }
 
   @Post('logout') async logout(@Req() req: AuthRequest, @Res({ passthrough: true }) res: Response) {

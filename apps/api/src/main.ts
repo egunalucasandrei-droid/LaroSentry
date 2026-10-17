@@ -29,6 +29,7 @@ import { SubmissionsController } from './submissions.controller.js';
 import { collectSecurityAlerts } from './security-alerts.js';
 import { db } from './db.js';
 import { env, workspaceRoot } from './config.js';
+import { localDemoEnabled } from './demo-access.js';
 import { administrator, sessionMiddleware, type AuthRequest } from './http.js';
 import { deliverMail } from './outbox.js';
 import { logger } from './logger.js';
@@ -106,6 +107,7 @@ class HealthController {
       database: 'connected',
       version: '0.1.0',
       pilot: true,
+      ...(env.NODE_ENV !== 'production' ? { demoMode: localDemoEnabled() } : {}),
       ...(env.NODE_ENV === 'development' &&
       /^larosentry_demo_\d{13}$/.test(process.env.LOCAL_DEMO_INSTANCE ?? '')
         ? { demoInstance: process.env.LOCAL_DEMO_INSTANCE }

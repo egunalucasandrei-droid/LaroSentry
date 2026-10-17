@@ -169,7 +169,7 @@ export default function Scheduler() {
         <Link to="/scheduler">Open user mode</Link>
       </section>
     );
-  if (manage && !user.mfaVerified)
+  if (manage && !user.mfaVerified && !user.verificationBypassed)
     return <Navigate to={`/mfa?next=${encodeURIComponent(pathname)}`} replace />;
   const page = pathname.split('/').filter(Boolean).at(-1);
   const nav = manage

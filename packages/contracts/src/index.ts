@@ -54,6 +54,7 @@ export type User = {
   mfaEnabled: boolean;
   mfaVerified: boolean;
   demoAccessAllowed?: boolean;
+  verificationBypassed?: boolean;
   emailVerified?: boolean;
   phoneVerified?: boolean;
   needsOnboarding?: boolean;

@@ -83,13 +83,13 @@ export default function Onboarding() {
       </section>
     );
   const s = state.data,
-    first = s.emailVerified || s.phoneVerified,
-    both = s.emailVerified && s.phoneVerified;
+    first = s.emailVerified || s.phoneVerified || !!me.data.user.verificationBypassed,
+    both = (s.emailVerified && s.phoneVerified) || !!me.data.user.verificationBypassed;
   if (pathname.startsWith('/onboarding/facility'))
     return (
       <section className="container section onboarding">
         <Link to="/onboarding">Account verification</Link>
-        <FacilityOnboarding verified={both} />
+        <FacilityOnboarding verified={both} verificationBypassed={!!me.data.user.verificationBypassed} />
       </section>
     );
   const settings = pathname.includes('/settings/');
@@ -480,7 +480,13 @@ export function Recommendations() {
     </>
   );
 }
-export function FacilityOnboarding({ verified }: { verified: boolean }) {
+export function FacilityOnboarding({
+  verified,
+  verificationBypassed = false,
+}: {
+  verified: boolean;
+  verificationBypassed?: boolean;
+}) {
   const { pathname } = useLocation(),
     navigate = useNavigate();
   const id = pathname.split('/')[3];
@@ -585,9 +591,9 @@ export function FacilityOnboarding({ verified }: { verified: boolean }) {
     <>
       <h1>Verify your facility</h1>
       <p>
-        Contact information ✓ · Email ✓ · Mobile ✓ · Identity/facility evidence → Admin review. One government
-        ID image is requested only to review identity and authority. Do not submit extra ID numbers or
-        unrelated personal information.
+        {verificationBypassed
+          ? 'LOCAL DEMO: contact verification and evidence uploads are optional for this named fixture. Complete facility information and independent admin approval are still required. Use synthetic data only; bypassed evidence is not identity verification.'
+          : 'Contact information ✓ · Email ✓ · Mobile ✓ · Identity/facility evidence → Admin review. One government ID image is requested only to review identity and authority. Do not submit extra ID numbers or unrelated personal information.'}
       </p>
       {error && <ErrorState error={error} />}
       {message && (
@@ -711,6 +717,12 @@ export function FacilityOnboarding({ verified }: { verified: boolean }) {
           ) : step === 2 ? (
             <div className="panel">
               <h2>Identity & supporting evidence</h2>
+              {verificationBypassed && (
+                <p className="notice">
+                  LOCAL DEMO: uploads and ID type are optional for this fixture. You can continue to Review
+                  application without them. No identity verification is claimed.
+                </p>
+              )}
               <p>
                 PNG/JPEG only, up to 2 MB each. Submit one supported government ID image, facility photo(s),
                 and appropriate authority/business evidence. Managers/representatives need authorization
@@ -720,7 +732,12 @@ export function FacilityOnboarding({ verified }: { verified: boolean }) {
               <form onSubmit={(e) => void save(e)}>
                 <label>
                   Government ID type
-                  <select name="idType" required defaultValue={draft.data.idType ?? ''} disabled={busy}>
+                  <select
+                    name="idType"
+                    required={!verificationBypassed}
+                    defaultValue={draft.data.idType ?? ''}
+                    disabled={busy}
+                  >
                     <option value="" disabled>
                       Select supported ID
                     </option>

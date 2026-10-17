@@ -18,6 +18,7 @@ import { administrator, parse, uuid, type AuthRequest } from './http.js';
 import { adminWriter, decision, preserveAdminAccess } from './admin-access.js';
 import { alertRules, alertWorker } from './security-alerts.js';
 import { audit } from './audit.js';
+import { demoModeFor } from './demo-access.js';
 
 const pageSchema = z.object({
   page: z.coerce.number().int().min(1).max(10000).default(1),
@@ -196,6 +197,7 @@ export class AdminController {
       )
         throw new ConflictException('This decision is not available in the current application state.');
       const applicant = await tx.user.findUniqueOrThrow({ where: { id: application.applicantId } });
+      const demoReview = demoModeFor(actor) && demoModeFor(applicant);
       if (application.draftId) {
         if (
           application.reviewerId !== actor.id ||
@@ -203,7 +205,7 @@ export class AdminController {
             !(application.state === 'CLARIFICATION' && data.action === 'REJECT'))
         )
           throw new ConflictException('Start this review before recording a decision.');
-        if (data.action === 'APPROVE') {
+        if (data.action === 'APPROVE' && !demoReview) {
           if (!data.identityReviewed || !data.facilityReviewed || !applicant.phoneVerifiedAt)
             throw new ConflictException(
               'Review identity/authority evidence and verify both applicant contacts before approval.',
@@ -236,7 +238,7 @@ export class AdminController {
             );
         }
       }
-      if (data.action === 'APPROVE' && (applicant.suspendedAt || !applicant.verifiedAt))
+      if (data.action === 'APPROVE' && (applicant.suspendedAt || (!applicant.verifiedAt && !demoReview)))
         throw new ConflictException('The applicant must be verified and unrestricted before approval.');
       const state =
         data.action === 'APPROVE' ? 'APPROVED' : data.action === 'REJECT' ? 'REJECTED' : 'CLARIFICATION';
@@ -245,10 +247,23 @@ export class AdminController {
         data: {
           state,
           ...(data.action === 'APPROVE' && application.draftId
-            ? { identityState: 'MANUALLY_REVIEWED', facilityState: 'MANUALLY_REVIEWED' }
+            ? {
+                identityState: demoReview ? 'DEMO_BYPASSED' : 'MANUALLY_REVIEWED',
+                facilityState: demoReview ? 'DEMO_BYPASSED' : 'MANUALLY_REVIEWED',
+              }
             : {}),
         },
       });
+      if (demoReview && data.action === 'APPROVE')
+        await audit(
+          tx,
+          actor.id,
+          'LOCAL_DEMO_APPLICATION_REVIEW_BYPASSED',
+          id,
+          'SUCCESS',
+          req.correlationId,
+          data.reason,
+        );
       if (application.draftId) {
         if (data.action === 'CLARIFY')
           await tx.facilityDraft.update({ where: { id: application.draftId }, data: { stage: 'DRAFT' } });

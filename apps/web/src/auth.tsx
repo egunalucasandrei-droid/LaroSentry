@@ -41,14 +41,15 @@ export default function Auth() {
     setMessage('');
     setBusy(true);
     try {
-      const result = await post<{ message?: string; user?: User }>(path, data);
+      const result = await post<{ message?: string; user?: User; demoMode?: boolean }>(path, data);
       if (path === '/auth/login') {
         qc.clear();
-        qc.setQueryData(['me'], { user: result.user });
+        qc.setQueryData(['me'], { user: result.user, demoMode: result.demoMode });
         if (
-          result.user?.needsOnboarding ||
-          !result.user?.emailVerified ||
-          (result.user.role !== 'PLAYER' && !result.user.phoneVerified && !result.user.demoAccessAllowed)
+          !result.user?.verificationBypassed &&
+          (result.user?.needsOnboarding ||
+            !result.user?.emailVerified ||
+            (result.user.role !== 'PLAYER' && !result.user.phoneVerified && !result.user.demoAccessAllowed))
         ) {
           navigate('/onboarding');
           return;
@@ -60,7 +61,9 @@ export default function Auth() {
             ? '/owner'
             : access.staff
               ? '/staff'
-              : '/app/bookings';
+              : result.user?.verificationBypassed
+                ? '/app'
+                : '/app/bookings';
         navigate(nextValue ? next : home);
       } else {
         setMessage(result.message ?? 'Saved.');

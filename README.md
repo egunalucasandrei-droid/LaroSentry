@@ -1,5 +1,18 @@
 # LaroSentry
 
+### Local DEMO MODE and system guide (2026-10-17)
+
+For the existing four local accounts, opt into verification bypass while retaining password login, real roles/memberships, CSRF and business rules:
+
+```powershell
+cd C:\larosentry-test
+$env:DEMO_MODE='true'
+$env:LOCAL_DEMO_QUICK_ACCESS='0'
+.\pnpm.cmd demo:start
+```
+
+Open **http://127.0.0.1:5176/login** with your local `@demo.example.test` credentials. Admin/owner/staff/player open `/admin`, `/owner`, `/staff`, `/app`; the existing switcher remains. The UI displays DEMO MODE. Stop the terminal, set `$env:DEMO_MODE='false'`, and restart to restore normal verification. Production/public hosting refuses this flag. No local passwords, roles, verification timestamps or MFA enrollment are rewritten. Render remains separate and unchanged. [Setup, scope, tests and disable steps](docs/demo-mode.md). [How the whole system connects](docs/system-framework.md).
+
 ### Free Render testing pilot (2026-10-17)
 
 **Live test site:** https://larosentry-test.onrender.com ([login](https://larosentry-test.onrender.com/login)). Private accounts: ignored `.local/render-demo-accounts.md`. Seven live browser tests passed. The free service may take about a minute to wake; the free database expires on 2026-11-16 (Asia/Shanghai). Automatic Git deploys are disabled; use Manual Deploy on the existing service for later reviewed changes.

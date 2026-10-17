@@ -1,5 +1,7 @@
 # API contract
 
+Local-only demo extension (2026-10-17): `/auth/me` and successful `/auth/login` include server-derived `demoMode`; their user projection adds `verificationBypassed`. Actual email/mobile/MFA status remains separate. Only startup configuration can enable the mode, for four named loopback demo fixtures; no endpoint/header/query can activate it. `/health` reports `demoMode` only outside production so the launcher refuses to reuse a server running the wrong mode. Local evidence decisions use `DEMO_BYPASSED` and explicit audit actions; all permission/resource/CSRF/data/state checks remain. [Scope and production refusal](demo-mode.md).
+
 ## Registration/onboarding verification
 
 Signup additionally requires normalized Philippine mobile, confirmPassword, acceptedPrivacy and the current policyVersion. Login can create a restricted unverified session; normal `account()` operations deny it until required contacts are complete. `GET /onboarding` returns only the current user's private contact state/preferences. `POST /onboarding/email/resend`, `/sms/send`, `/sms/verify` (six-digit code), `/contacts` (password/email/phone), `/purpose` (PLAYER/HOST only) and `/preferences` implement the onboarding flow. `GET /onboarding/dev-sms` is enabled only for explicitly configured loopback simulation and only returns that account's active test code. Recommendations are read from `/onboarding/recommendations`.
