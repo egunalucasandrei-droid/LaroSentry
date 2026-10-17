@@ -92,6 +92,22 @@ for (const role of ['PLAYER', 'FACILITY_OWNER', 'FACILITY_STAFF', 'ADMIN'])
     expect((await page.request.get('/api/admin/overview')).status()).toBe(403);
     await fits(page);
     if (role === 'PLAYER') {
+      await page.goto('/app');
+      await expect(page.getByRole('heading', { name: 'Your playing plan.', exact: true })).toBeVisible();
+      await expect(page.locator('.stats-grid .panel')).toHaveCount(4);
+      const overviewResponse = await page.request.get('/api/player/overview');
+      expect(overviewResponse.status()).toBe(200);
+      const overview = await overviewResponse.json();
+      expect(overview.pending).toBeGreaterThanOrEqual(0);
+      expect(overview.recent.length).toBeLessThanOrEqual(5);
+      await fits(page);
+      await page.goto('/app/reports');
+      await page.getByLabel('Report about', { exact: true }).selectOption('FACILITY');
+      const targets = page.getByLabel('Facility to report', { exact: true });
+      await expect(targets.locator('option').nth(1)).toBeAttached();
+      await expect(page.getByPlaceholder('UUID reference')).toHaveCount(0);
+      expect((await page.request.get('/api/report-targets?type=FACILITY&page=1')).status()).toBe(200);
+      await fits(page);
       await page.goto('/scheduler/book');
       await expect(page.locator('.nolta-slot').first()).toBeVisible();
       await fits(page);

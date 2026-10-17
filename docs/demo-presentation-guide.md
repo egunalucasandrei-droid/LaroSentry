@@ -1,4 +1,4 @@
-﻿# LaroSentry client presentation guide
+# LaroSentry client presentation guide
 
 This is a fictional-data prototype, not a commercial launch. Show implemented workflows, describe limitations plainly, and never use real identity documents, payment credentials or client contact details.
 
@@ -118,3 +118,4 @@ Render verification delivery is unavailable; fresh users cannot complete normal 
 
 This guide deliberately uses Markdown checkboxes rather than a public guided-mode UI. It supports a presenter without adding routes, persistent client state, credential exposure or production-only navigation exceptions. Completed boxes are the presentation progress indicator, not invented application statistics.
 
+Presentation refresh verified live: https://larosentry-test.onrender.com (application `7f676df`, deploy `dep-db9nuvijnfac73d0fh50`). Five read-only checks passed; local scenario fixtures were not copied online. Use the private **Render** account guide, not local passwords. Privileged testers must complete normal MFA; fresh real-user contact verification still needs configured providers.

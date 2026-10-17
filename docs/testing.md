@@ -82,3 +82,11 @@ $env:BROWSER_BASE_URL='http://127.0.0.1:5176'
 ```
 
 Database/browser workflow runners use isolated local databases. Discovery/information require the local demo running. Do not run general mutation suites against Render. Opt-in `responsive-live.spec.ts` is read-only except login/logout and is the appropriate deployed-pilot smoke check.
+
+Presentation deployment verification: application commit `7f676df`, Render deploy `dep-db9nuvijnfac73d0fh50`, status live; **5 read-only live tests passed (27.0s)**. Extended the PLAYER case to verify the new dashboard's four real count cards/own API and named report-resource selector without submitting anything. HTTPS/CSP, health/database, all role logins/security/MFA denial, calendar selection, responsive bounds and logout passed. No live data seeding, approval, MFA enrollment or migration occurred.
+
+```powershell
+$env:BROWSER_BASE_URL='https://larosentry-test.onrender.com'
+$env:RENDER_RESPONSIVE_E2E='1'
+.\pnpm.cmd exec playwright test tests/browser/responsive-live.spec.ts
+```

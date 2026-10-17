@@ -12,10 +12,17 @@ Changed files:
 
 - API: `apps/api/src/{admin.controller,submissions.controller,workspaces.controller,presentation-scenarios,presentation-seed}.ts`, `apps/api/test/workspaces.test.ts`.
 - Web: `apps/web/src/{admin,community,court-art,onboarding,player-home,public,role-workspaces,scheduler,submissions,workspace}.tsx`, `apps/web/src/styles.css`.
-- Scripts/tests: `package.json`, `scripts/{demo,test-database}.mjs`, `tests/browser/{responsive,presentation}.spec.ts`.
+- Scripts/tests: `package.json`, `scripts/{demo,test-database}.mjs`, `tests/browser/{responsive,presentation,responsive-live}.spec.ts`.
 - Docs: `README.md`, `docs/{progress,testing,system-framework,demo-presentation-guide,api,access-control-matrix,security-controls,threat-model}.md`.
 
-Limits: delivery providers, live gateways/refunds, player receipt submission, camera capture, public review submission/display and anonymous support remain unimplemented. Game selectors search the existing sixty-game public discovery window, not all history. Physical devices were not tested. Normal online MFA remains necessary. Existing pg adapter warning and free hosting/database-expiration limits remain. Deployment outcome will be recorded only after verification.
+Limits: delivery providers, live gateways/refunds, player receipt submission, camera capture, public review submission/display and anonymous support remain unimplemented. Game selectors search the existing sixty-game public discovery window, not all history. Physical devices were not tested. Normal online MFA remains necessary. Existing pg adapter warning and free hosting/database-expiration limits remain. Deployment verified below.
+
+
+### Verified test-pilot deployment - 2026-10-17
+
+Updated only the existing authorized fictional Render test pilot: https://larosentry-test.onrender.com. Application commit `7f676dff8876494323e7373531156d4b5bd94021` (full commit recorded by Git), deploy `dep-db9nuvijnfac73d0fh50`, status **live**. Render build succeeded. All **5 read-only live browser checks passed (27.0s)**: HTTPS/CSP, health/database connected, public/mobile pages, actual new player overview and report-target selector, calendar selection, all four role logins, secure cookies, non-admin/admin-before-MFA API denial, bypass disabled and logout. Privileged live accounts were checked through their MFA gate; post-MFA actions were verified locally with actual enrollment, not claimed as performed online.
+
+Existing free web/database plans were inspected; no duplicate/paid service, remote seed, migration, database reset, environment replacement, permission grant or shared MFA change. Production flags remained `NODE_ENV=production`, `PUBLIC_PILOT=1`, `VITE_PUBLIC_PILOT=1`, `LOCAL_DEMO_QUICK_ACCESS=0`; no DEMO_MODE override, delivery providers unavailable. Database expiration remains 2026-11-16 01:09 Asia/Shanghai. This is a client-testing prototype, not a commercial launch. Documentation/test-only follow-up commits do not alter the deployed bundle.
 
 ## Admin MFA setup and actionable booking queue - 2026-10-17
 
