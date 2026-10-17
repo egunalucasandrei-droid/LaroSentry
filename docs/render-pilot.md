@@ -22,6 +22,8 @@ The operator-only `apps/api/src/pilot-fixtures.ts` provisions three labelled fic
 
 The private password handoff is `.local/render-demo-accounts.md`, ignored by Git. Share it only with authorized testers. Do not use real personal details, real government IDs or actual payments. Existing local demo credentials/data are unchanged.
 
+**Login troubleshooting:** Render accounts use `@pilot.example.test` and the passwords in that private Render file. The older `@demo.example.test` table belongs only to `http://127.0.0.1:5176`; those accounts were not copied to Render. Changing just the email while retaining a local-demo password will not work. Online privileged accounts use actual authenticator MFA, not the local password-based preview shortcut. All four Render credential pairs were rechecked successfully after the reported login failure; no password reset was needed.
+
 ## Known test limits
 
 - Real email/SMS delivery is **unconfigured**, with no provider charges enabled. The outbox does not attempt SMTP and the onboarding UI/API report unavailable verification. Real new registrations cannot finish both-contact verification or use verified-account features. Use the privately provisioned fictional accounts for testing booking/role workflows. Recovery/invitation email delivery is likewise unavailable. Account recovery for the pilot requires the trusted operator.
