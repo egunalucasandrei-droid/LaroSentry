@@ -2,6 +2,8 @@
 
 ### Free Render testing pilot (2026-10-17)
 
+**Live test site:** https://larosentry-test.onrender.com ([login](https://larosentry-test.onrender.com/login)). Private accounts: ignored `.local/render-demo-accounts.md`. Seven live browser tests passed. The free service may take about a minute to wake; the free database expires on 2026-11-16 (Asia/Shanghai). Automatic Git deploys are disabled; use Manual Deploy on the existing service for later reviewed changes.
+
 Render is the selected test host, using free services only and a separate fictional-data database. The existing stack is retained. Real email/SMS delivery remains unconfigured; privileged test accounts require actual MFA. See [pilot setup and limitations](docs/render-pilot.md) and [current deployment results](docs/progress.md). This does not approve a commercial production launch.
 
 ### Registration and verification (2026-10-17)

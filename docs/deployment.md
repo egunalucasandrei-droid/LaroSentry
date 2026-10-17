@@ -1,5 +1,9 @@
 # Deployment status
 
+## Live free Render pilot — 2026-10-17
+
+**https://larosentry-test.onrender.com** is live on application commit `72d5677d28c7a5123e06cbcace2ff4cf4942f98b`, deployment `dep-db9iht6q1p3s738cnhb0`. HTTPS health returned 200/database connected and seven live browser tests passed. Both services use explicit `free` plans, with external database access disabled. No paid resources were enabled. Private accounts: ignored `.local/render-demo-accounts.md`. Real email/SMS delivery is unavailable; privileged accounts require MFA enrollment. [Setup, limits, expiration and repeat commands](render-pilot.md). This status supersedes the historical preparation statements below; commercial production remains gated.
+
 ## Current Render pilot preparation — 2026-10-17
 
 The owner has now chosen **Render, free resources only**, created an account and authorized the official CLI. This supersedes the Vercel direction below. One free Singapore PostgreSQL database has been created and the eight migrations applied with a separate runtime role. A narrowly scoped Render-only public test startup boundary, same-origin static frontend serving, explicit unavailable email/SMS states and operator-only synthetic fixtures have been implemented and locally checked. General commercial production remains gated. Remote web deployment and live checks are in progress; see [free pilot configuration and limitations](render-pilot.md) and [progress](progress.md) for the eventual verified address. Historical deployment statements below describe earlier states.
