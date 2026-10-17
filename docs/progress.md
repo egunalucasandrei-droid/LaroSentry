@@ -4,7 +4,9 @@
 
 The reported screen was unfinished MFA enrollment after successful login. Added locally generated QR code, numbered setup guidance, explanation of the six-digit app code, and a password-confirmed restart path for a fresh pending key. No existing shared-account MFA state was reset or enrolled automatically; the posted setup key was not used to generate a code. Added ADMIN-only `/admin/booking-requests` in navigation and an overview shortcut. It lists up to 100 pending requests for assigned facilities and uses existing operational decisions with reason and explicit confirmation. ADMIN does not bypass facility membership; oversight/history remains separate. The live pilot admin already has an OWNER assignment at its first fictional test facility, so no new grant or seed is needed.
 
-Verification/deployment results will be recorded after the final checks. No schema change or production booking mutation is required.
+Verified: 55 PostgreSQL integration tests passed (35.7s); all 6 isolated admin/host/staff browser tests passed (46.0s), including QR rendering, fresh-key restart, actual MFA, overview-to-queue navigation, pending filtering, invalid-filter rejection, confirm/reject persistence and non-admin route denials. Lint, typecheck and production build passed. Initial development checks caught and fixed a missing Query decorator import before deployment.
+
+Deployed application commit `2281ddb6fcd7205d82337c3b4495f62ff78c8b71` to existing Render service, deploy `dep-db9k1krrjlhs73f4a0a0`, status live. Four live role checks passed: deployed MFA guidance/assets, admin's existing owner capability, other-role denials at the new route, pending API denied before MFA, no production bypass and mobile bounds. Health returned ok/database connected. No live MFA enrollment, booking approval/rejection, seed, grant, schema migration or environment change was performed. The user must finish MFA using their own authenticator; live post-MFA approval was not claimed. URL: https://larosentry-test.onrender.com/admin/booking-requests. Documentation-only follow-up does not change the deployed bundle.
 
 ## Account-login recheck - 2026-10-17
 
