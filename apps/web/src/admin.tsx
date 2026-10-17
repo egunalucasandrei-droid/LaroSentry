@@ -127,6 +127,14 @@ function Overview() {
   return (
     <>
       <h1>Administration overview</h1>
+      <div className="button-row">
+        <Link className="btn" to="/admin/booking-requests">
+          Review pending booking requests
+        </Link>
+        <Link className="btn secondary" to="/admin/bookings">
+          All booking history
+        </Link>
+      </div>
       <p className="muted">Current database counts. Review records before making a decision.</p>
       {result.isPending ? (
         <Loading />

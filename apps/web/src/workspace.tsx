@@ -148,6 +148,7 @@ export default function Workspace() {
       : admin
         ? ([
             ['/admin', 'Overview', LayoutDashboard],
+            ['/admin/booking-requests', 'Booking requests', CalendarDays],
             ['/admin/applications', 'Facility applications', CalendarDays],
             ['/admin/facilities', 'Facilities', LayoutDashboard],
             ['/admin/users', 'Users', Settings],
@@ -242,7 +243,11 @@ export default function Workspace() {
           !me.data.user.mfaVerified && !me.data.user.verificationBypassed ? (
             <MfaPanel />
           ) : admin ? (
-            <Admin />
+            pathname === '/admin/booking-requests' ? (
+              <Operations />
+            ) : (
+              <Admin />
+            )
           ) : pathname.endsWith('/notifications') ? (
             <Notifications />
           ) : pathname.endsWith('/settings') ? (
@@ -797,9 +802,10 @@ function Operations() {
   const [checkInMode, setCheckInMode] = useState('reference');
   const paymentOnly = pathname.endsWith('/payment-entry');
   const staffMode = pathname.startsWith('/staff');
+  const adminRequests = pathname === '/admin/booking-requests';
   const bookings = useQuery({
-    queryKey: ['operations'],
-    queryFn: () => api<Booking[]>('/operations/bookings'),
+    queryKey: ['operations', adminRequests ? 'pending' : 'all'],
+    queryFn: () => api<Booking[]>(`/operations/bookings${adminRequests ? '?status=PENDING' : ''}`),
   });
   const facilities = useQuery({
     queryKey: ['my-facilities'],
@@ -835,14 +841,23 @@ function Operations() {
     <>
       <div className="eyebrow dark">FACILITY OPERATIONS</div>
       <h1>
-        {pathname.endsWith('check-in')
-          ? 'Welcome players in.'
-          : pathname.endsWith('facilities')
-            ? 'Your facilities'
-            : pathname.endsWith('payments')
-              ? 'Payment records'
-              : 'The day’s game plan.'}
+        {adminRequests
+          ? 'Booking requests for assigned facilities'
+          : pathname.endsWith('check-in')
+            ? 'Welcome players in.'
+            : pathname.endsWith('facilities')
+              ? 'Your facilities'
+              : pathname.endsWith('payments')
+                ? 'Payment records'
+                : 'The day’s game plan.'}
       </h1>
+      {adminRequests && (
+        <p className="notice">
+          Review up to 100 pending player requests at facilities where you have an owner assignment. Admin
+          oversight of other facilities remains available under Bookings. Confirmation rechecks availability,
+          price and policy before reserving the court.
+        </p>
+      )}
       {message && (
         <p className="notice success" role="status">
           {message}
@@ -969,12 +984,22 @@ function Operations() {
                     <button
                       className="btn"
                       disabled={busy}
-                      onClick={() =>
+                      onClick={() => {
+                        const reason = adminRequests
+                          ? window.prompt('Reason for confirming this booking (at least 3 characters)')
+                          : 'Approved by authorized facility operator.';
+                        if (
+                          !reason ||
+                          reason.trim().length < 3 ||
+                          (adminRequests &&
+                            !window.confirm(`Confirm booking ${b.reference}? This reserves the court time.`))
+                        )
+                          return;
                         void action(`/operations/bookings/${b.id}/decision`, {
                           status: 'CONFIRMED',
-                          reason: 'Approved by authorized facility operator.',
-                        })
-                      }
+                          reason,
+                        });
+                      }}
                     >
                       Confirm request
                     </button>
@@ -985,7 +1010,7 @@ function Operations() {
                         const reason = window.prompt(
                           'Reason for rejecting this request (at least 3 characters)',
                         );
-                        if (reason)
+                        if (reason && (!adminRequests || window.confirm(`Reject booking ${b.reference}?`)))
                           void action(`/operations/bookings/${b.id}/decision`, {
                             status: 'REJECTED',
                             reason,

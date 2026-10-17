@@ -1,5 +1,11 @@
 # Implementation progress
 
+## Admin MFA setup and actionable booking queue - 2026-10-17
+
+The reported screen was unfinished MFA enrollment after successful login. Added locally generated QR code, numbered setup guidance, explanation of the six-digit app code, and a password-confirmed restart path for a fresh pending key. No existing shared-account MFA state was reset or enrolled automatically; the posted setup key was not used to generate a code. Added ADMIN-only `/admin/booking-requests` in navigation and an overview shortcut. It lists up to 100 pending requests for assigned facilities and uses existing operational decisions with reason and explicit confirmation. ADMIN does not bypass facility membership; oversight/history remains separate. The live pilot admin already has an OWNER assignment at its first fictional test facility, so no new grant or seed is needed.
+
+Verification/deployment results will be recorded after the final checks. No schema change or production booking mutation is required.
+
 ## Account-login recheck - 2026-10-17
 
 Investigated a live login failure caused by using local-only credentials on Render. Existing passwords/accounts were preserved; no account alias, privileged grant, production bypass or MFA reset was added. All four existing live role-login tests passed again (19.6s), including secure cookies, role checks, MFA gates and logout. A separate browser check without a forced next URL passed all eight local/live account logins: distinct local admin/owner/staff/player headings and landing paths; live player bookings and required privileged MFA gates. Non-admin accounts returned 403 for the admin overview API. Updated only ignored private account guides with prominent environment labels, cross-links, role workspace paths and switching instructions. The live application needs no authentication-code change or redeployment for this credential mismatch. Credentials remain outside Git.

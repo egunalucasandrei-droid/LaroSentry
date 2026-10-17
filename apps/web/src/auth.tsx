@@ -10,6 +10,7 @@ import { api, post } from './api';
 import type { Access } from './role-workspaces';
 import { ErrorState, useUser } from './main';
 import { CourtArt } from './court-art';
+import QRCode from 'qrcode';
 type RegisterForm = z.input<typeof registerSchema>;
 export default function Auth() {
   const { pathname } = useLocation();
@@ -287,6 +288,22 @@ export function MfaPanel() {
   const user = useUser();
   const qc = useQueryClient();
   const [setup, setSetup] = useState<{ secret: string; uri: string } | null>(null);
+  const [setupQr, setSetupQr] = useState('');
+  useEffect(() => {
+    let active = true;
+    setSetupQr('');
+    if (setup)
+      void QRCode.toDataURL(setup.uri, { width: 220, margin: 2 })
+        .then((url) => {
+          if (active) setSetupQr(url);
+        })
+        .catch(() => {
+          /* Manual entry remains available. */
+        });
+    return () => {
+      active = false;
+    };
+  }, [setup]);
   const [codes, setCodes] = useState<string[]>([]);
   const [message, setMessage] = useState('');
   const [error, setError] = useState<Error | null>(null);
@@ -379,8 +396,34 @@ export function MfaPanel() {
         )}
       {setup && (
         <div className="notice">
-          <p>Add a time-based account in your authenticator app using this secret. Keep it private.</p>
+          <h3>Finish authenticator setup</h3>
+          <ol>
+            <li>Open your authenticator app and choose Add account, then Scan QR code.</li>
+            <li>Scan this code, or enter the setup key below as a time-based account.</li>
+            <li>Enter the current six-digit code from the app below, then choose Verify MFA.</li>
+          </ol>
+          {setupQr && (
+            <img
+              src={setupQr}
+              alt="Scan with your authenticator app to set up LaroSentry MFA"
+              width={220}
+              height={220}
+            />
+          )}
+          <p>Manual setup key — keep this and the QR code private:</p>
           <code className="break-all">{setup.secret}</code>
+          <p>Your password is not the verification code. Codes change every 30 seconds.</p>
+          <button
+            type="button"
+            className="btn secondary"
+            disabled={busy}
+            onClick={() => {
+              setSetup(null);
+              setMessage('Confirm your password again to generate a fresh setup key.');
+            }}
+          >
+            Restart authenticator setup
+          </button>
         </div>
       )}
       {(setup || user.data?.user?.mfaEnabled) && !user.data?.user?.mfaVerified && (

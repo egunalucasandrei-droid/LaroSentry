@@ -70,3 +70,7 @@ Visitors cannot browse individual game listings. Signed-in accounts can browse p
 Only the booking organizer can publish, edit game rules/offline counts, read the roster, approve/remove players or send/revoke invitations. Facility membership and ADMIN do not bypass these checks. Private game summaries require organizer ownership, active participation or an unexpired intended invitation. Invitation acceptance always checks the signed-in recipient, including when an email token is supplied. Roster and invitation lists omit contact details and secret hashes.
 
 Uploads/downloads, exports and staff-invitation management remain disabled/unimplemented. Namespace denial tests cover attempted admin file/export access; this does not certify a file or export workflow that does not exist.
+
+# Admin pending-booking queue
+
+`/admin/booking-requests` requires an authenticated ADMIN with verified MFA. Its operational list and decisions additionally require the existing facility membership and BOOKINGS permission (OWNER assignments include this permission). Other roles are denied the admin route; an admin without facility assignment cannot approve that facility's bookings. Global booking investigation remains read-only under `/admin/bookings`. Decisions use the existing audited, conflict-checked API with a recorded reason; the admin queue requires explicit confirmation.

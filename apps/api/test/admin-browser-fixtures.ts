@@ -65,6 +65,28 @@ await db.membership.create({
   },
 });
 const startsAt = new Date(new Date(Date.now() + 4 * 86400000).toISOString().slice(0, 10) + 'T10:00:00+08:00');
+await db.membership.create({
+  data: { userId: fixtures.ADMIN!.id, facilityId: hostFacility.id, role: 'OWNER', permissions: ['BOOKINGS'] },
+});
+for (const [index, reference] of ['ADMIN-PENDING-CONFIRM', 'ADMIN-PENDING-REJECT'].entries()) {
+  const start = new Date(startsAt.getTime() + (3 + index) * 3600000);
+  await db.booking.create({
+    data: {
+      reference,
+      userId: fixtures.PLAYER!.id,
+      courtId: hostFacility.courts[0]!.id,
+      startsAt: start,
+      endsAt: new Date(start.getTime() + 3600000),
+      status: 'PENDING',
+      mode: 'BOOKING_ONLY',
+      expectedGuests: 1,
+      totalCentavos: 50000,
+      hourlyRateSnapshot: 50000,
+      policySnapshot: 'Test policy only.',
+      expiresAt: start,
+    },
+  });
+}
 for (const paid of [true, false]) {
   const booking = await db.booking.create({
     data: {

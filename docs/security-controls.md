@@ -59,3 +59,9 @@ Every 30 seconds, local rules scan the latest 5,000 relevant events within 30 mi
 ## Publication preparation update ? 2026-10-14
 
 See [publication review](publication-review.md) for launch blockers and isolated demo setup. Demo seed/bootstrap commands now require recognized loopback demo/test databases; production remains gated. Migration 202610140006_policy_acceptance adds nullable privacyVersion and policyAcceptedAt fields without relabeling legacy acceptance. Registration validates and records the current shared policy bundle. New local demos create four fictional roles in a new database; no existing database is reset. Complete policy approval, retention/erasure, public support and deployment review before launch.
+
+# MFA setup usability and scoped admin booking requests
+
+MFA enrollment displays an in-browser QR code and manual setup key with three explicit steps. QR generation uses the existing local library; no third-party QR service receives the secret. Restarting unfinished setup returns to password confirmation; submitting it generates a fresh pending key. This does not reset enabled MFA or bypass verification. Save recovery codes after successful enrollment. Shared setup keys should be replaced before enrollment completes.
+
+The admin booking-request queue reuses facility-scoped operational APIs. ADMIN alone grants no new facility decision authority. The optional `status=PENDING` list filter is server-validated; it filters before the existing 100-row limit. Existing MFA, CSRF, membership, price/policy, allocation/conflict and audit checks remain in force.

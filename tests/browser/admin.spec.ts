@@ -33,6 +33,10 @@ for (const role of ['PLAYER', 'FACILITY_OWNER', 'FACILITY_STAFF'])
       page.getByRole('heading', { name: 'Administrator access required', exact: true }),
     ).toBeVisible();
     await expect(page.getByRole('link', { name: 'Security alerts', exact: true })).toHaveCount(0);
+    await page.goto('/admin/booking-requests');
+    await expect(
+      page.getByRole('heading', { name: 'Administrator access required', exact: true }),
+    ).toBeVisible();
     const mainNav = page.getByRole('navigation', { name: 'Main navigation' });
     await expect(mainNav.getByRole('link', { name: 'Owner workspace', exact: true })).toHaveCount(
       role === 'FACILITY_OWNER' ? 1 : 0,
@@ -67,6 +71,14 @@ test('court host management uses real court records and working schedule/courts/
   await expect(page.getByRole('heading', { name: 'Protect your workspace.' })).toBeVisible();
   await page.getByLabel('Confirm your password').fill(fixtures().FACILITY_OWNER!.password);
   await page.getByRole('button', { name: 'Set up authenticator' }).click();
+  await expect(
+    page.getByRole('img', { name: 'Scan with your authenticator app to set up LaroSentry MFA' }),
+  ).toBeVisible();
+  const initialSetup = await page.locator('code').innerText();
+  await page.getByRole('button', { name: 'Restart authenticator setup' }).click();
+  await page.getByLabel('Confirm your password').fill(fixtures().FACILITY_OWNER!.password);
+  await page.getByRole('button', { name: 'Set up authenticator' }).click();
+  expect((await page.locator('code').innerText()) !== initialSetup).toBe(true);
   const secret = await page.locator('code').innerText();
   await page.getByLabel('Authenticator or recovery code').fill(await generate({ secret }));
   await page.getByRole('button', { name: 'Verify MFA', exact: true }).click();
@@ -172,6 +184,27 @@ test('admin MFA, applications, report decisions, restrictions, alerts, audit and
   await expect(page.getByText('Save these recovery codes privately now.')).toBeVisible();
   await page.getByRole('link', { name: 'Open workspace', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Administration overview', exact: true })).toBeVisible();
+  await page.getByRole('link', { name: 'Review pending booking requests', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Booking requests for assigned facilities' })).toBeVisible();
+  const pending = await (await page.request.get('/api/operations/bookings?status=PENDING')).json();
+  expect(pending.every((booking: { status: string }) => booking.status === 'PENDING')).toBe(true);
+  expect((await page.request.get('/api/operations/bookings?status=INVALID')).status()).toBe(400);
+  const confirmDialog = async (dialog: import('@playwright/test').Dialog) =>
+    dialog.accept(
+      dialog.type() === 'prompt' ? 'Reviewed pending player request at assigned facility.' : undefined,
+    );
+  page.on('dialog', confirmDialog);
+  const confirmCard = page.locator('.panel').filter({ hasText: 'ADMIN-PENDING-CONFIRM' });
+  await confirmCard.getByRole('button', { name: 'Confirm request', exact: true }).click();
+  await expect(confirmCard).toHaveCount(0);
+  const rejectCard = page.locator('.panel').filter({ hasText: 'ADMIN-PENDING-REJECT' });
+  await rejectCard.getByRole('button', { name: 'Reject request', exact: true }).click();
+  await expect(rejectCard).toHaveCount(0);
+  page.off('dialog', confirmDialog);
+  const confirmed = await (await page.request.get('/api/admin/bookings?q=ADMIN-PENDING-CONFIRM')).json();
+  expect(confirmed.items[0].status).toBe('CONFIRMED');
+  const rejected = await (await page.request.get('/api/admin/bookings?q=ADMIN-PENDING-REJECT')).json();
+  expect(rejected.items[0].status).toBe('REJECTED');
   await page.goto('/admin/bookings');
   await page.getByLabel('Search booking reference').fill('ROLE-PAID');
   await page.getByRole('button', { name: 'Search', exact: true }).click();

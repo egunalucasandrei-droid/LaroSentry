@@ -9,6 +9,7 @@ import {
   Param,
   Post,
   Req,
+  Query,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { randomBytes } from 'node:crypto';
@@ -350,11 +351,13 @@ export class BookingsController {
       };
     });
   }
-  @Get('operations/bookings') async operations(@Req() req: AuthRequest) {
+  @Get('operations/bookings') async operations(@Req() req: AuthRequest, @Query('status') status?: string) {
     const user = await privileged(req);
+    const pending = status === undefined ? undefined : parse(z.literal('PENDING'), status);
     const memberships = await db.membership.findMany({ where: { userId: user.id } });
     const rows = await db.booking.findMany({
       where: {
+        ...(pending ? { status: pending } : {}),
         court: {
           facility: {
             memberships: {
