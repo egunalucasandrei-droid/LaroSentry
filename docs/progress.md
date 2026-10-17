@@ -1,5 +1,11 @@
 ﻿# Implementation progress
 
+## Verified NOLTA/theme Render update - 2026-10-17
+
+Explicit user deployment authorization received after local verification. Deployed application commit `652f7f5d042b1c817f88ad6e0689de38bee8bf0c` to the existing free fictional test pilot, https://larosentry-test.onrender.com, deploy `dep-db9p4g3ncjis73a5jugg`, status **live**. Build succeeded; **5 read-only live browser checks passed (26.0s)**: real light/dark CSS and reload persistence, three NOLTA user tabs, migrated court status/archive fields, responsive public/player/calendar pages, all four role logins/logout, secure cookies and admin/scheduler management denial before MFA. Health is ok/database connected; local demo bypass remains off. Privileged post-MFA actions were tested locally earlier; shared live MFA enrollment was not altered.
+
+Before rollout, created a protected custom-format remote database backup and checked its archive index. Applied additive migration 202610170009 successfully; Court/Booking/PaymentRecord/User counts were unchanged. Temporary access was limited to the deployment workstation IP and the original empty external allow-list was restored and rechecked. Web/database remain free, no duplicate/paid resources, environment/secret replacement, remote fictional seed, booking mutation, account/permission grant or MFA reset. The backup location and credentials remain only in ignored local files. Documentation/test-only follow-up does not change the deployed bundle. This supersedes the earlier local-only deployment status for this update.
+
 ## NOLTA court lifecycle, compact navigation and light/dark mode - 2026-10-17
 
 Inspected existing NOLTA source reference, app/API/auth/schema/tests/docs before changes. Existing scheduling, pricing, approval, payment, reschedule, maintenance, reset and account/resource controls were retained. Confirmed gaps: required/visible court surface, duplicate profile/account links, management badge wording, name uniqueness, conflicting court changes, no safe removal, and no persistent theme toggle. Referenced PDF was not available; supplied screenshot guided the compact header.

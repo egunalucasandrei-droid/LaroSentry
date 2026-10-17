@@ -27,6 +27,7 @@ test('live responsive public pages, booking availability, API/database and produ
   await expect(theme).toBeVisible();
   if ((await theme.getAttribute('aria-pressed')) !== 'true') await theme.click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await expect(page.locator('html')).toHaveCSS('background-color', 'rgb(16, 25, 22)');
   await page.reload();
   await expect(theme).toHaveAttribute('aria-pressed', 'true');
   await theme.click();
@@ -98,6 +99,7 @@ for (const role of ['PLAYER', 'FACILITY_OWNER', 'FACILITY_STAFF', 'ADMIN'])
     expect(cookie.secure && cookie.httpOnly).toBe(true);
     expect(cookie.sameSite).toBe('Lax');
     expect((await page.request.get('/api/admin/overview')).status()).toBe(403);
+    expect((await page.request.get('/api/scheduler/courts?manage=1')).status()).toBe(403);
     await fits(page);
     if (role === 'PLAYER') {
       await page.goto('/app');
@@ -123,6 +125,15 @@ for (const role of ['PLAYER', 'FACILITY_OWNER', 'FACILITY_STAFF', 'ADMIN'])
       );
       await expect(page.locator('.nolta').getByText('Account / Logout', { exact: true })).toHaveCount(0);
       await expect(page.locator('.nolta-slot').first()).toBeVisible();
+      const courts = await (await page.request.get('/api/scheduler/courts')).json();
+      expect(courts.length).toBeGreaterThan(0);
+      for (const court of courts) {
+        expect(['AVAILABLE', 'UNAVAILABLE', 'MAINTENANCE']).toContain(court.availabilityStatus);
+        expect(court.archivedAt).toBeNull();
+      }
+      const theme = page.getByRole('button', { name: 'Dark mode', exact: true });
+      if ((await theme.getAttribute('aria-pressed')) !== 'true') await theme.click();
+      await expect(page.locator('.nolta')).toHaveCSS('background-color', 'rgb(21, 33, 28)');
       await fits(page);
       await page.setViewportSize({ width: 360, height: 800 });
       expect(

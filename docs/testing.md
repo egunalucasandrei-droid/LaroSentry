@@ -129,3 +129,7 @@ $env:BROWSER_BASE_URL='http://127.0.0.1:5176'
 ```
 
 No Render request, remote migration, seed, secret edit, new service or deployment was made for this task. Existing online deployment does not yet contain this update.
+
+## NOLTA/theme live verification - 2026-10-17
+
+After explicit authorization, migrated the existing free pilot additively and deployed application `652f7f5` (Render `dep-db9p4g3ncjis73a5jugg`, live). Extended `responsive-live.spec.ts` to check actual dark CSS, theme reload persistence, NOLTA's three-tab user navigation, new court fields and management API denials. All **5 live checks passed (26.0s)**; lint passed after the test extension. Health reported ok/database connected; existing MFA and production bypass settings remain. Both resources remain free; external database allow-list restored to empty. No live court/booking mutation, seed, MFA enrollment or permission grant was used for the smoke checks. These results supersede the earlier not-deployed status for this update.

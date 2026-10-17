@@ -76,3 +76,5 @@ The global header's moon/sun button toggles white/light and dark modes for LaroS
 NOLTA mobile navigation uses three equal columns. Dialogs use centered auto margins, dynamic viewport/safe-area height bounds, internal scrolling, wrapping references and a sticky accessible close header. Native dialog keyboard trapping/Escape and the original reservation information/actions remain.
 
 The supplied HTML/CSS reference and screenshot were reviewed. The referenced `toprompt-laro-sentry.pdf` was not present in the workspace/Downloads; no PDF-specific visual comparison is claimed. Local verification/results are recorded in testing.md and progress.md. No Render deployment, production migration, secret change or remote data operation was performed for this update.
+
+Deployment follow-up: explicitly authorized and verified on 2026-10-17 at https://larosentry-test.onrender.com, application `652f7f5`, deploy `dep-db9p4g3ncjis73a5jugg`. Additive migration and protected backup completed; five live checks passed. The earlier local-only status above is historical. Normal online MFA remains mandatory and no shared enrollment was changed.
