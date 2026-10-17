@@ -144,6 +144,7 @@ test('user booking, private reservations, profile, cancellation and responsive s
   page,
 }) => {
   test.setTimeout(120000);
+  await page.setViewportSize({ width: 360, height: 800 });
   await login(page, 'PLAYER', '/scheduler/book');
   await page.getByLabel('Court', { exact: true }).selectOption({ label: 'NOLTA Test Club · Original court' });
   await page.getByLabel('Booking date', { exact: true }).fill(date());

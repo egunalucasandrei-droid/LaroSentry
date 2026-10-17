@@ -14,7 +14,8 @@ const env = Object.fromEntries(
 const schedulerBrowser = process.argv[2] === 'browser-scheduler';
 const onboardingBrowser = process.argv[2] === 'browser-onboarding';
 const demoVerification = process.argv[2] === 'demo-verification';
-const name = `larosentry_${schedulerBrowser || demoVerification ? 'demo' : 'test'}_${Date.now()}`;
+const responsiveBrowser = process.argv[2] === 'browser-responsive';
+const name = `larosentry_${schedulerBrowser || demoVerification || responsiveBrowser ? 'demo' : 'test'}_${Date.now()}`;
 const psql = resolve('.tools/pgsql/bin/psql.exe');
 const adminEnv = { ...process.env, PGPASSWORD: readFileSync('.local/pg-password', 'utf8').trim() };
 function sql(database, text) {
@@ -52,7 +53,7 @@ function run(args) {
 }
 console.log(`Created separate PostgreSQL test database ${name}. Existing databases are untouched.`);
 run(['--filter', '@larosentry/api', 'db:migrate']);
-if (demoVerification) {
+if (demoVerification || responsiveBrowser) {
   const file = resolve(`.local/demo-verification-${name}.json`);
   writeFileSync(
     file,
@@ -75,7 +76,7 @@ if (demoVerification) {
   });
   run(['--filter', '@larosentry/api', 'db:seed']);
   run(['--filter', '@larosentry/api', 'exec', 'tsx', 'src/demo-seed.ts']);
-  for (const mode of ['true', 'false']) {
+  for (const mode of responsiveBrowser ? [] : ['true', 'false']) {
     childEnv.DEMO_MODE = mode;
     console.log(`Testing DEMO_MODE=${mode} in an isolated local database.`);
     run([
@@ -88,27 +89,38 @@ if (demoVerification) {
       'test/demo-mode.test.ts',
     ]);
   }
-} else if (process.argv[2] !== 'browser-admin' && !schedulerBrowser && !onboardingBrowser) {
-  run(['--filter', '@larosentry/api', 'test:integration']);
-} else {
+}
+if (
+  responsiveBrowser ||
+  (!demoVerification && (process.argv[2] === 'browser-admin' || schedulerBrowser || onboardingBrowser))
+) {
   Object.assign(childEnv, {
     PORT: '4010',
     APP_ORIGIN: 'http://127.0.0.1:5175',
     API_PROXY_TARGET: 'http://127.0.0.1:4010',
     BROWSER_BASE_URL: 'http://127.0.0.1:5175',
     ADMIN_E2E: '1',
+    ...(responsiveBrowser
+      ? { RESPONSIVE_E2E: '1', DEMO_MODE: 'true', RESPONSIVE_PASSWORD_FILE: childEnv.DEMO_PASSWORD_FILE }
+      : {}),
     ...(onboardingBrowser ? { ONBOARDING_E2E: '1' } : {}),
     ...(schedulerBrowser
       ? { SCHEDULER_E2E: '1', LOCAL_DEMO_QUICK_ACCESS: '1', LOCAL_DEMO_INSTANCE: name }
       : {}),
   });
-  run([
-    '--filter',
-    '@larosentry/api',
-    'exec',
-    'tsx',
-    schedulerBrowser ? 'test/scheduler-browser-fixtures.ts' : 'test/admin-browser-fixtures.ts',
-  ]);
+  if (!responsiveBrowser)
+    run([
+      '--filter',
+      '@larosentry/api',
+      'exec',
+      'tsx',
+      schedulerBrowser ? 'test/scheduler-browser-fixtures.ts' : 'test/admin-browser-fixtures.ts',
+    ]);
+  await browserTests();
+} else if (!demoVerification) {
+  run(['--filter', '@larosentry/api', 'test:integration']);
+}
+async function browserTests() {
   const requireApi = createRequire(resolve('apps/api/package.json'));
   const requireWeb = createRequire(resolve('apps/web/package.json'));
   const children = [];
@@ -158,11 +170,13 @@ if (demoVerification) {
         'exec',
         'playwright',
         'test',
-        schedulerBrowser
-          ? 'tests/browser/scheduler.spec.ts'
-          : onboardingBrowser
-            ? 'tests/browser/onboarding.spec.ts'
-            : 'tests/browser/admin.spec.ts',
+        responsiveBrowser
+          ? 'tests/browser/responsive.spec.ts'
+          : schedulerBrowser
+            ? 'tests/browser/scheduler.spec.ts'
+            : onboardingBrowser
+              ? 'tests/browser/onboarding.spec.ts'
+              : 'tests/browser/admin.spec.ts',
       ],
       { stdio: 'inherit', env: childEnv, windowsHide: true },
     );

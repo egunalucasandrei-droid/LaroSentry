@@ -234,7 +234,7 @@ export default function CourtCalendar({ facilities }: { facilities: Facility[] }
                 key={s.startsAt}
                 className={`calendar-slot slot-${s.status.toLowerCase()}`}
                 disabled={s.status !== 'AVAILABLE'}
-                aria-pressed={start === local(s.startsAt)}
+                aria-pressed={start === local(s.startsAt) && s.status === 'AVAILABLE'}
                 onClick={() => {
                   setStart(local(s.startsAt));
                   setEnd(local(s.endsAt));
@@ -243,7 +243,11 @@ export default function CourtCalendar({ facilities }: { facilities: Facility[] }
                 <strong>
                   {displayClock(s.startsAt)}–{displayClock(s.endsAt)}
                 </strong>
-                <span>{s.status.replaceAll('_', ' ')}</span>
+                <span>
+                  {start === local(s.startsAt) && s.status === 'AVAILABLE'
+                    ? '✓ Selected'
+                    : s.status.replaceAll('_', ' ')}
+                </span>
               </button>
             ))}
           </div>

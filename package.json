@@ -29,6 +29,7 @@
     "test:admin:e2e": "node scripts/test-database.mjs browser-admin",
     "test:onboarding:e2e": "node scripts/test-database.mjs browser-onboarding",
     "test:scheduler:e2e": "node scripts/test-database.mjs browser-scheduler",
+    "test:responsive:e2e": "node scripts/test-database.mjs browser-responsive",
     "db:backup": "node scripts/backup.mjs backup",
     "db:restore:test": "node scripts/backup.mjs restore",
     "demo:setup": "node scripts/demo.mjs setup",

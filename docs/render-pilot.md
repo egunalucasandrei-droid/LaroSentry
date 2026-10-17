@@ -45,3 +45,7 @@ $env:RENDER_PILOT_E2E='1'
 ```
 
 The suite creates one synthetic unverified account and a cancelled test booking while preserving audit/history. It does not replace shared-account MFA. Browser artifacts remain private and ignored.
+
+# Responsive update - 2026-10-17
+
+The existing free service is being updated after local responsive verification. The same service/database, build/start commands and production environment are retained. No production seed, database reset, MFA reset, provider change or paid resource is part of this update. Final deploy ID, application commit and live read-only checks are recorded in the completion entry below.

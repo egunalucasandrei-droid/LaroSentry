@@ -274,6 +274,16 @@ small,
 .mobile-menu {
   display: none;
 }
+.mobile-account-links {
+  display: none;
+}
+.workspace-menu > .workspace-toggle {
+  display: none;
+}
+/* Keep the existing desktop sidebar visible even when the mobile disclosure is closed. */
+.workspace-menu:not(.open) > .workspace-menu-content {
+  display: block;
+}
 .hero {
   background: var(--navy);
   color: #fff;
@@ -2905,5 +2915,244 @@ hr {
 @media (max-width: 600px) {
   .onboarding .form-row {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+/* Responsive workspace and shared controls: constrain content, never hide page overflow. */
+.workspace-content > *,
+.workspace-menu-content,
+.panel,
+.form-row > *,
+.detail-grid > *,
+.booking-row > *,
+.section-title > *,
+.filter-bar > *,
+.date-filters > * {
+  min-width: 0;
+}
+.workspace-content,
+.notice,
+.booking-row,
+.legal-copy {
+  overflow-wrap: anywhere;
+}
+.table-scroll {
+  max-width: 100%;
+  overscroll-behavior-inline: contain;
+}
+.table-scroll table {
+  min-width: 620px;
+}
+img,
+video,
+canvas {
+  max-width: 100%;
+}
+dialog {
+  max-width: calc(100% - 24px);
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+}
+@media (max-width: 1100px) {
+  .nav-wrap {
+    flex-wrap: wrap;
+  }
+}
+@media (max-width: 850px) {
+  .site-header {
+    position: relative;
+    z-index: 20;
+  }
+  .site-header nav.open {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+    max-height: 65dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .site-header nav a,
+  .site-header nav .text-button {
+    min-height: 44px;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    white-space: normal;
+  }
+  .mobile-account-links {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--line);
+  }
+  .account-nav {
+    display: none;
+  }
+  .mobile-menu {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  .workspace-nav {
+    padding-bottom: 14px;
+    margin-bottom: 22px;
+  }
+  .workspace-menu > .workspace-toggle {
+    display: flex;
+    width: 100%;
+    background: #fff;
+    font: inherit;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+    min-height: 48px;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 650;
+    color: var(--green);
+  }
+  .workspace-menu > .workspace-toggle::before {
+    content: '+';
+  }
+  .workspace-menu.open > .workspace-toggle::before {
+    content: '-';
+  }
+  .workspace-menu > .workspace-toggle span {
+    font-weight: 400;
+    font-size: 0.8rem;
+    text-align: right;
+  }
+  .workspace-menu:not(.open) > .workspace-menu-content {
+    display: none;
+  }
+  .workspace-menu-content {
+    max-height: 65dvh;
+    overflow-y: auto;
+    padding: 12px 2px;
+  }
+  .workspace-nav nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .workspace-nav nav > a {
+    min-height: 44px;
+    padding: 10px;
+    font-size: 0.85rem;
+  }
+  .workspace-extra {
+    min-height: 44px;
+    align-items: center;
+    font-size: 0.85rem;
+  }
+}
+@media (max-width: 600px) {
+  input:not([type='checkbox']):not([type='radio']),
+  select,
+  textarea {
+    font-size: 16px;
+    max-width: 100%;
+  }
+  .btn,
+  .icon-button,
+  .text-button,
+  .tabs button,
+  .tabs a {
+    min-height: 44px;
+  }
+  .btn {
+    white-space: normal;
+    text-align: center;
+  }
+  .form-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .booking-row {
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .booking-row p,
+  .booking-row small {
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+  .section-title {
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+  .court-row {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .panel {
+    padding: 18px;
+  }
+  .admin-filters label {
+    flex-basis: 100%;
+  }
+  .admin-record .btn {
+    min-height: 44px;
+  }
+  .table-scroll {
+    font-size: 0.85rem;
+  }
+  .facility-map {
+    height: 340px;
+    max-width: 100%;
+  }
+  .leaflet-touch .leaflet-bar a {
+    width: 44px;
+    height: 44px;
+    line-height: 44px;
+  }
+}
+.breadcrumbs {
+  color: #526557;
+}
+.slot-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
+  gap: 8px;
+}
+.calendar-slot {
+  min-height: 64px;
+  padding: 10px 9px;
+  gap: 3px;
+}
+.calendar-slot strong {
+  font-size: 13px;
+}
+.calendar-slot span {
+  font-size: 13px;
+}
+.calendar-slot[aria-pressed='true'] {
+  outline: 3px solid var(--green);
+  outline-offset: 2px;
+}
+.calendar-slot:focus-visible {
+  outline: 3px solid var(--navy);
+  outline-offset: 3px;
+}
+.calendar-slot:not(:disabled):hover {
+  border-color: var(--green);
+}
+@media (max-width: 600px) {
+  .facility-card p,
+  .facility-card .small,
+  .breadcrumbs,
+  .results-bar,
+  .results-bar label,
+  .footer-top > div > a:not(.brand) {
+    font-size: 0.85rem;
+  }
+  .footer-top > div > a:not(.brand) {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+  }
+  .toggle {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .results-bar select {
+    min-height: 44px;
   }
 }

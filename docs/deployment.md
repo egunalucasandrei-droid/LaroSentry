@@ -1,5 +1,9 @@
 # Deployment status
 
+## Responsive update - 2026-10-17
+
+The responsive update uses the same free web service and private database. No migration or seeding is required. Build/start commands and production environment remain unchanged; `DEMO_MODE` stays absent/default false and `LOCAL_DEMO_QUICK_ACCESS=0`. [Responsive checks](responsive.md) and [current Render verification](render-pilot.md) record the final deployment result. Historical checkpoints below refer to earlier commits.
+
 ## Live free Render pilot — 2026-10-17
 
 **https://larosentry-test.onrender.com** is live on application commit `72d5677d28c7a5123e06cbcace2ff4cf4942f98b`, deployment `dep-db9iht6q1p3s738cnhb0`. HTTPS health returned 200/database connected and seven live browser tests passed. Both services use explicit `free` plans, with external database access disabled. No paid resources were enabled. Private accounts: ignored `.local/render-demo-accounts.md`. Real email/SMS delivery is unavailable; privileged accounts require MFA enrollment. [Setup, limits, expiration and repeat commands](render-pilot.md). This status supersedes the historical preparation statements below; commercial production remains gated.

@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, Navigate, NavLink, useLocation } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -36,6 +36,11 @@ export default function Workspace() {
   const me = useUser(),
     { pathname } = useLocation();
   const access = useWorkspaces(!!me.data?.user);
+  const workspaceMenu = useRef<HTMLButtonElement>(null);
+  const [workspaceOpen, setWorkspaceOpen] = useState(false);
+  useEffect(() => {
+    setWorkspaceOpen(false);
+  }, [pathname]);
   if (me.isPending) return <Loading />;
   if (me.error)
     return (
@@ -170,45 +175,67 @@ export default function Workspace() {
   return (
     <div className="container workspace">
       <aside className="workspace-nav">
-        <WorkspaceSwitcher access={access.data} />
-        <span className="eyebrow dark">YOUR CORNER</span>
-        <h2>Hello, {me.data.user.nickname}.</h2>
-        <p className="muted small">
-          {operations
-            ? staff
-              ? 'Staff workspace'
-              : 'Facility owner workspace'
-            : admin
-              ? 'Platform administration'
-              : 'A little more room for play.'}
-        </p>
-        <nav aria-label="Workspace navigation">
-          {links.map(([href, label, Icon]) => (
-            <NavLink key={href} to={href} end>
-              <Icon size={18} />
-              {label}
-            </NavLink>
-          ))}
-        </nav>
-        <Link className="workspace-extra" to="/facilities">
-          Find your next court <ArrowRight size={16} />
-        </Link>
-        {(access.data.admin || access.data.owner || access.data.staff) && (
-          <Link
-            className="workspace-extra"
-            to={access.data.admin || access.data.owner ? '/manage' : '/staff'}
+        <div
+          className={`workspace-menu${workspaceOpen ? ' open' : ''}`}
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') {
+              setWorkspaceOpen(false);
+              workspaceMenu.current?.focus();
+            }
+          }}
+        >
+          <button
+            type="button"
+            className="workspace-toggle"
+            ref={workspaceMenu}
+            aria-expanded={workspaceOpen}
+            aria-controls="workspace-links"
+            onClick={() => setWorkspaceOpen(!workspaceOpen)}
           >
-            {access.data.admin
-              ? 'Administration shortcuts'
-              : access.data.owner
-                ? 'Hosting shortcuts'
-                : 'Staff overview'}{' '}
-            <ShieldCheck size={16} />
-          </Link>
-        )}
-        <Link className="workspace-extra" to="/app/settings/security">
-          Account security <ShieldCheck size={16} />
-        </Link>
+            Workspace menu <span>{links.find(([href]) => href === pathname)?.[1] ?? 'Navigation'}</span>
+          </button>
+          <div className="workspace-menu-content" id="workspace-links">
+            <WorkspaceSwitcher access={access.data} />
+            <span className="eyebrow dark">YOUR CORNER</span>
+            <h2>Hello, {me.data.user.nickname}.</h2>
+            <p className="muted small">
+              {operations
+                ? staff
+                  ? 'Staff workspace'
+                  : 'Facility owner workspace'
+                : admin
+                  ? 'Platform administration'
+                  : 'A little more room for play.'}
+            </p>
+            <nav aria-label="Workspace navigation">
+              {links.map(([href, label, Icon]) => (
+                <NavLink key={href} to={href} end>
+                  <Icon size={18} />
+                  {label}
+                </NavLink>
+              ))}
+            </nav>
+            <Link className="workspace-extra" to="/facilities">
+              Find your next court <ArrowRight size={16} />
+            </Link>
+            {(access.data.admin || access.data.owner || access.data.staff) && (
+              <Link
+                className="workspace-extra"
+                to={access.data.admin || access.data.owner ? '/manage' : '/staff'}
+              >
+                {access.data.admin
+                  ? 'Administration shortcuts'
+                  : access.data.owner
+                    ? 'Hosting shortcuts'
+                    : 'Staff overview'}{' '}
+                <ShieldCheck size={16} />
+              </Link>
+            )}
+            <Link className="workspace-extra" to="/app/settings/security">
+              Account security <ShieldCheck size={16} />
+            </Link>
+          </div>
+        </div>
       </aside>
       <div className="workspace-content">
         {operations || admin ? (

@@ -122,3 +122,7 @@ The seven database-backed admin pages cover overview, applications, users/restri
 Applicants submit under `/app/applications`; pending facilities stay private until approval. Users submit and track concerns under `/app/reports`. `/security`, linked from the footer and admin area, explains acceptable use and fair reporting. No personal contact details are published; the contact channel for users unable to sign in is pending setup.
 
 `pnpm test:admin:e2e` creates a separate test database and temporary localhost servers on ports 5175/4010, generates isolated test identities, exercises real MFA and admin workflows, then stops its servers. It requires local PostgreSQL and installed Playwright Chromium. It never grants ADMIN in the regular demo database. It retains the test database and ignored fixtures for inspection. Run browser suites sequentially because they share Playwright output directories.
+
+## Responsive interface
+
+Mobile navigation, role workspaces and compact court time slots are documented in [responsive verification](docs/responsive.md). Run `.\pnpm.cmd test:responsive:e2e` from the repository root for the isolated width/role audit. Current deployment evidence and free-service limits are in [Render pilot](docs/render-pilot.md).

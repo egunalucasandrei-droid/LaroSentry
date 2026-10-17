@@ -1,7 +1,7 @@
-import React, { Suspense, lazy, useEffect, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter, Link, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
-import { QueryClient, QueryClientProvider, useQuery, useQueryClient } from '@tanstack/react-query';
+import { BrowserRouter, Link, NavLink, Route, Routes, useLocation } from 'react-router-dom';
+import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { ArrowUpRight, Bell, Menu, ShieldCheck, X } from 'lucide-react';
 import type { User } from '@larosentry/contracts';
 import { api, post, ApiError } from './api';
@@ -74,12 +74,24 @@ function Shell() {
     queryFn: () => api<{ admin: boolean; owner: boolean; staff: boolean }>('/workspaces'),
     enabled: !!data?.user,
   });
-  const navigate = useNavigate(),
-    qc = useQueryClient();
   const location = useLocation();
   const [menu, setMenu] = useState(false),
     [online, setOnline] = useState(navigator.onLine);
   const [logoutError, setLogoutError] = useState<Error | null>(null);
+  const menuButton = useRef<HTMLButtonElement>(null);
+  const menuPanel = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (!menu) return;
+    menuPanel.current?.querySelector<HTMLElement>('a, button')?.focus();
+    const close = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMenu(false);
+        menuButton.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', close);
+    return () => window.removeEventListener('keydown', close);
+  }, [menu]);
   useEffect(() => {
     setMenu(false);
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -96,9 +108,8 @@ function Shell() {
   async function logout() {
     try {
       await post('/auth/logout');
-      qc.clear();
-      navigate('/');
-      setLogoutError(null);
+      // A fresh document clears private query data without racing protected-route redirects.
+      window.location.replace('/');
     } catch (e) {
       setLogoutError(e as Error);
     }
@@ -128,13 +139,23 @@ function Shell() {
           <Brand />
           <button
             className="icon-button mobile-menu"
+            ref={menuButton}
+            aria-controls="main-navigation"
             aria-label={menu ? 'Close menu' : 'Open menu'}
             aria-expanded={menu}
             onClick={() => setMenu(!menu)}
           >
             {menu ? <X /> : <Menu />}
           </button>
-          <nav aria-label="Main navigation" className={menu ? 'open' : ''}>
+          <nav
+            id="main-navigation"
+            ref={menuPanel}
+            aria-label="Main navigation"
+            className={menu ? 'open' : ''}
+            onClick={(event) => {
+              if ((event.target as Element).closest('a')) setMenu(false);
+            }}
+          >
             {(workspaces.data?.admin || workspaces.data?.owner || workspaces.data?.staff) && (
               <NavLink to={workspaces.data.admin ? '/admin' : workspaces.data.owner ? '/owner' : '/staff'}>
                 {workspaces.data.admin
@@ -151,6 +172,26 @@ function Shell() {
             <NavLink to="/list-your-facility">
               For facilities <ArrowUpRight size={14} />
             </NavLink>
+            {data?.user ? (
+              <div className="mobile-account-links">
+                <Link to="/app/bookings">My bookings</Link>
+                <Link to="/app/saved">Saved places</Link>
+                <Link to="/app/invitations">Invitations</Link>
+                <Link to="/app/notifications">Notifications</Link>
+                <Link to="/app/reports">My reports</Link>
+                <Link to="/app/applications">Facility applications</Link>
+                <Link to="/app/settings/profile">Account settings</Link>
+                <Link to="/app/settings/verification">Account verification</Link>
+                <button className="text-button" onClick={() => void logout()}>
+                  Log out
+                </button>
+              </div>
+            ) : (
+              <div className="mobile-account-links">
+                <Link to="/login">Log in</Link>
+                <Link to="/register">Sign up</Link>
+              </div>
+            )}
           </nav>
           <div className="account-nav">
             {data?.user ? (

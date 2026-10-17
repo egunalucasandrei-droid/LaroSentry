@@ -469,7 +469,7 @@ function Availability({
             clear();
           }}
         />
-        <section>
+        <section className="nolta-availability">
           <h2>Available time slots</h2>
           <p>
             {court.surface} · {formatMoney(court.hourlyRate)} / hour · Philippine time
@@ -505,7 +505,7 @@ function Availability({
                       key={s.startsAt}
                       className={`nolta-slot nolta-${s.status.toLowerCase()}`}
                       disabled={s.status !== 'AVAILABLE'}
-                      aria-pressed={selected === s.startsAt}
+                      aria-pressed={selected === s.startsAt && s.status === 'AVAILABLE'}
                       onClick={() => {
                         setSelected(s.startsAt);
                         onSelect({ court, slot: s, duration: Number(duration) });
@@ -514,7 +514,9 @@ function Availability({
                       <strong>
                         {displayClock(s.startsAt)} – {displayClock(s.endsAt)}
                       </strong>
-                      <span>{label}</span>
+                      <span>
+                        {selected === s.startsAt && s.status === 'AVAILABLE' ? '✓ Selected' : label}
+                      </span>
                     </button>
                   );
                 })}

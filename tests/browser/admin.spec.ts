@@ -102,7 +102,7 @@ test('court host management uses real court records and working schedule/courts/
       await expect(page.getByRole('button', { name: '8:00 AM–9:00 AM CLOSED', exact: true })).toBeDisabled();
       await page.getByRole('button', { name: 'Reopen', exact: true }).click();
       await expect(
-        page.getByRole('button', { name: '8:00 AM–9:00 AM AVAILABLE', exact: true }),
+        page.getByRole('button', { name: '8:00 AM–9:00 AM ✓ Selected', exact: true }),
       ).toBeEnabled();
       await page.getByRole('button', { name: 'Week', exact: true }).click();
       await expect(page.locator('.calendar-days button')).toHaveCount(7);
@@ -121,8 +121,10 @@ test('court host management uses real court records and working schedule/courts/
     await page.goto('/manage');
   }
   await page.goto('/owner');
+  await page.getByRole('button', { name: /Workspace menu/ }).click();
   await page.getByLabel('Switch workspace').selectOption('/app');
   await expect(page.getByRole('heading', { name: 'Recommended for you', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: /Workspace menu/ }).click();
   await page.getByLabel('Switch workspace').selectOption('/owner');
   await expect(page.getByRole('heading', { name: 'The day’s game plan.', exact: true })).toBeVisible();
   await page.goto('/owner/facilities');
@@ -156,6 +158,7 @@ test('admin MFA, applications, report decisions, restrictions, alerts, audit and
   browser,
 }) => {
   test.setTimeout(180000);
+  await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/admin');
   await expect(page).toHaveURL(/\/login\?next=/);
   await login(page, 'ADMIN');

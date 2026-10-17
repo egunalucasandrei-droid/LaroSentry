@@ -696,10 +696,12 @@ export function FacilityDetail() {
             A pending request does not reserve a slot. Wait for facility confirmation before making any
             payment or travelling.
           </p>
+        </div>
+        <BookingPanel facility={f} />
+        <div className="facility-reviews">
           <h3>Reviews</h3>
           <p className="muted">Customer reviews are not currently available.</p>
         </div>
-        <BookingPanel facility={f} />
       </div>
     </section>
   );

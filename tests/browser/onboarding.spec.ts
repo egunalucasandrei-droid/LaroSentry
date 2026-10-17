@@ -239,7 +239,12 @@ test('facility wizard, private reviewer images, clarification and approval lead 
   await accepted.getByRole('button', { name: 'Verify my email', exact: true }).click();
   await expect(accepted.getByRole('status')).toContainText('Email verified');
   await login(accepted, recipient.email, recipient.password);
+  const sent = accepted.waitForResponse(
+    (response) =>
+      response.url().endsWith('/api/onboarding/sms/send') && response.request().method() === 'POST',
+  );
   await accepted.getByRole('button', { name: 'Send verification code', exact: true }).click();
+  expect((await sent).ok()).toBe(true);
   const sms = await (await accepted.request.get('/api/onboarding/dev-sms')).json();
   await accepted.getByLabel('SMS verification code', { exact: true }).fill(sms.code);
   await accepted.getByRole('button', { name: 'Verify mobile', exact: true }).click();
